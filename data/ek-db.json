@@ -2,11 +2,11 @@
   "banks": [
     [
       "HDFC Bank ••4521",
-      42635
+      145
     ],
     [
       "SBI ••7790",
-      12540
+      1658
     ],
     [
       "ICICI Bank ••3306",
@@ -49,6 +49,94 @@
   "cardDue": 18420,
   "budget": 20000,
   "customTxns": [
+    {
+      "id": 1792269302761,
+      "mode": "EkPay UPI",
+      "n": "Tata Play (1092837465) (Family Sports & Kids HD)",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 485,
+      "d": "Just now",
+      "bank": "SBI ••7790",
+      "ref": "4825226165306"
+    },
+    {
+      "id": 1792269201454,
+      "mode": "EkPay UPI",
+      "n": "Indane Gas (IndianOil) (LPG ID: 7000192837465)",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 8098,
+      "d": "Just now",
+      "bank": "SBI ••7790",
+      "ref": "4648209867801"
+    },
+    {
+      "id": 1792269048594,
+      "mode": "EkPay UPI",
+      "n": "FASTag (MP 04 CJ 7721) (ICICI Bank FASTag)",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 2000,
+      "d": "Just now",
+      "bank": "SBI ••7790",
+      "ref": "4799836309223"
+    },
+    {
+      "id": 1792269718164,
+      "mode": "EkPay UPI",
+      "n": "Jio (9876543210) (1.5 GB/day • 28 Days)",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 299,
+      "d": "Just now",
+      "bank": "SBI ••7790",
+      "ref": "4355532220842"
+    },
+    {
+      "id": 1792268997328,
+      "mode": "EkPay UPI",
+      "n": "Zomato Merchant",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 2300,
+      "d": "Just now",
+      "bank": "HDFC Bank ••4521",
+      "ref": "4726292935942"
+    },
+    {
+      "id": 1792269447326,
+      "mode": "EkPay UPI",
+      "n": "Vikram Singh",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 5555,
+      "d": "Just now",
+      "bank": "HDFC Bank ••4521",
+      "ref": "4822219596604"
+    },
+    {
+      "id": 1792269861327,
+      "mode": "EkPay UPI",
+      "n": "Zomato Merchant",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 34080,
+      "d": "Just now",
+      "bank": "HDFC Bank ••4521",
+      "ref": "4821207368885"
+    },
+    {
+      "id": 1792268956179,
+      "mode": "EkPay UPI",
+      "n": "Rahul Sharma",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 555,
+      "d": "Just now",
+      "bank": "HDFC Bank ••4521",
+      "ref": "4206493461605"
+    },
     {
       "id": 1792266069499,
       "mode": "EkPay UPI",
