@@ -1,0 +1,119 @@
+{
+  "banks": [
+    [
+      "HDFC Bank ••4521",
+      42635
+    ],
+    [
+      "SBI ••7790",
+      12540
+    ],
+    [
+      "ICICI Bank ••3306",
+      8915
+    ]
+  ],
+  "holdings": {
+    "RELIANCE": {
+      "qty": 12,
+      "avg": 2780
+    },
+    "TCS": {
+      "qty": 8,
+      "avg": 3910
+    },
+    "ZOMATO": {
+      "qty": 60,
+      "avg": 215
+    }
+  },
+  "sips": [
+    {
+      "name": "Parag Parikh Flexi Cap",
+      "amt": 2000,
+      "day": "5 Nov"
+    },
+    {
+      "name": "Nippon India Small Cap",
+      "amt": 1000,
+      "day": "5 Nov"
+    },
+    {
+      "name": "SBI Bluechip",
+      "amt": 1000,
+      "day": "10 Nov"
+    }
+  ],
+  "goldGrams": 4.5,
+  "emiPaid": 14,
+  "cardDue": 18420,
+  "budget": 20000,
+  "customTxns": [
+    {
+      "id": 1792266069499,
+      "mode": "EkPay UPI",
+      "n": "UPI Lite Top-up",
+      "cat": "Transfer",
+      "cr": false,
+      "amt": 1000,
+      "d": "Just now",
+      "bank": "HDFC Bank ••4521",
+      "ref": "4645546814736"
+    },
+    {
+      "id": 1792266197945,
+      "mode": "EkPay UPI",
+      "n": "UPI Lite Top-up",
+      "cat": "Transfer",
+      "cr": false,
+      "amt": 500,
+      "d": "Just now",
+      "bank": "HDFC Bank ••4521",
+      "ref": "4900935215889"
+    },
+    {
+      "id": 1792265098338,
+      "mode": "EkPay UPI",
+      "n": "Airtel Digital TV (1092837465) (Hindi Value Lite SD)",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 2595,
+      "d": "Just now",
+      "bank": "HDFC Bank ••4521",
+      "ref": "4468963631581"
+    },
+    {
+      "id": 1792265780541,
+      "mode": "UPI Lite",
+      "n": "Jio Prepaid (9876543210) (1.5 GB/day • 28 Days)",
+      "cat": "Transfer",
+      "cr": false,
+      "amt": 299,
+      "d": "Just now",
+      "bank": "UPI Lite Wallet",
+      "ref": "4239693559208"
+    },
+    {
+      "id": 1792264259905,
+      "mode": "EkPay UPI",
+      "n": "FASTag (MP 04 CJ 7721) (Axis Bank FASTag)",
+      "cat": "Bills",
+      "cr": false,
+      "amt": 1000,
+      "d": "Just now",
+      "bank": "HDFC Bank ••4521",
+      "ref": "4894890586292"
+    },
+    {
+      "id": 1792263919760,
+      "mode": "EkPay UPI",
+      "n": "5858466",
+      "cat": "Transfer",
+      "cr": false,
+      "amt": 500,
+      "d": "Just now",
+      "bank": "HDFC Bank ••4521",
+      "ref": "4527533691709"
+    }
+  ]
+}
