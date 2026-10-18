@@ -171,7 +171,7 @@ function BrandLogo({ brand, size = 42 }: { brand: string; size?: number }) {
     );
   }
 
-  let bg = "#4338ca", fg = "#fff", txt = brand.slice(0, 2).toUpperCase();
+  let bg = "#e81a6c", fg = "#fff", txt = brand.slice(0, 2).toUpperCase();
   if (b.includes("jio")) { bg = "#0a2885"; txt = "Jio"; }
   else if (b.includes("airtel")) { bg = "#e40000"; txt = "airtel"; }
   else if (b.includes("vi")) { bg = "#ee2737"; fg = "#ffd100"; txt = "Vi"; }
@@ -290,7 +290,7 @@ function Sparkline({ seed, up, w = 80, h = 30, big = false }: { seed: string; up
 }
 
 const CAT_COLORS: Record<string, string> = {
-  Food: "#4338ca",
+  Food: "#e81a6c",
   Shopping: "#0f9d58",
   Bills: "#e08a00",
   Travel: "#00a6d6",
@@ -761,8 +761,9 @@ export default function EkAppFullStack() {
     }
     setAuthPass("");
     setAuthPin("");
-    await loadAll();
+    const loaded = await loadAll();
     setAuthBusy(false);
+    if (!loaded) return setAuthErr("Data load nahi ho paya, dobara try karo");
     setNavHist(["home"]);
   };
 
@@ -1032,7 +1033,7 @@ export default function EkAppFullStack() {
                 <span
                   className="av"
                   title="Open My Profile & QR"
-                  style={{ background: "#e0e7ff", color: "#3730a3", cursor: "pointer", border: "2px solid var(--pr)" }}
+                  style={{ background: "#fce7f0", color: "#9d1048", cursor: "pointer", border: "2px solid var(--pr)" }}
                   onClick={() => go("profile")}
                 >
                   {initials}
@@ -1178,7 +1179,7 @@ export default function EkAppFullStack() {
                 </div>
 
                 <div className="car">
-                  <div style={{ background: "#eef2ff", color: "#312e81" }}>
+                  <div style={{ background: "#fce7f0", color: "#83103e" }}>
                     <b>Jio & Airtel True 5G Packs</b>
                     <small>Zero convenience fee on mobile recharges</small>
                     <button onClick={() => go("bill:mobile")}>Recharge Now</button>
@@ -1217,7 +1218,7 @@ export default function EkAppFullStack() {
             {baseView === "profile" && (
               <>
                 <div className="c p" style={{ textAlign: "center" }}>
-                  <span className="av" style={{ width: 62, height: 62, background: "#e0e7ff", color: "#3730a3", fontSize: 22, margin: "0 auto 8px" }}>
+                  <span className="av" style={{ width: 62, height: 62, background: "#fce7f0", color: "#9d1048", fontSize: 22, margin: "0 auto 8px" }}>
                     {initials}
                   </span>
                   <b style={{ fontSize: 17 }}>{myName}</b>
@@ -1228,9 +1229,9 @@ export default function EkAppFullStack() {
                     <rect x="10" y="10" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
                     <rect x="80" y="10" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
                     <rect x="10" y="80" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
-                    <rect x="20" y="20" width="10" height="10" fill="#4338ca" />
-                    <rect x="90" y="20" width="10" height="10" fill="#4338ca" />
-                    <rect x="20" y="90" width="10" height="10" fill="#4338ca" />
+                    <rect x="20" y="20" width="10" height="10" fill="#e81a6c" />
+                    <rect x="90" y="20" width="10" height="10" fill="#e81a6c" />
+                    <rect x="20" y="90" width="10" height="10" fill="#e81a6c" />
                     <path d="M50 20h10v20H50zM50 50h20v20H50zM80 50h20v10H80zM50 80h15v25H50zM75 75h30v30H75z" fill="#0f172a" />
                   </svg>
                   <small style={{ display: "block" }}>Scan with any UPI app to pay {myName}</small>
@@ -2026,9 +2027,9 @@ export default function EkAppFullStack() {
                       <rect x="10" y="10" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
                       <rect x="80" y="10" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
                       <rect x="10" y="80" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
-                      <rect x="20" y="20" width="10" height="10" fill="#4338ca" />
-                      <rect x="90" y="20" width="10" height="10" fill="#4338ca" />
-                      <rect x="20" y="90" width="10" height="10" fill="#4338ca" />
+                      <rect x="20" y="20" width="10" height="10" fill="#e81a6c" />
+                      <rect x="90" y="20" width="10" height="10" fill="#e81a6c" />
+                      <rect x="20" y="90" width="10" height="10" fill="#e81a6c" />
                       <path d="M50 20h10v20H50zM50 50h20v20H50zM80 50h20v10H80zM50 80h15v25H50zM75 75h30v30H75z" fill="#0f172a" />
                     </svg>
                     <small>Receive money directly into your primary bank account</small>
@@ -2057,7 +2058,7 @@ export default function EkAppFullStack() {
                         go("amt");
                       }}
                     >
-                      <span className="av" style={{ background: "#e0e7ff", color: "#3730a3" }}>{c[0][0]}</span>
+                      <span className="av" style={{ background: "#fce7f0", color: "#9d1048" }}>{c[0][0]}</span>
                       <span className="m">
                         <b>{c[0]}</b>
                         <small>{c[1]} • {c[2]}</small>
@@ -2227,7 +2228,7 @@ export default function EkAppFullStack() {
                         (t.n + t.cat + t.bank).toLowerCase().includes(searchQ.toLowerCase())
                     )
                     .map((t, idx) => (
-                      <button key={t.id + "_" + idx} className="row" onClick={() => go(`txn:${idx}`)}>
+                      <button key={t.id + "_" + idx} className="row" onClick={() => go(`txn:${txns.indexOf(t)}`)}>
                         <BrandLogo brand={t.n} />
                         <span className="m">
                           <b>{t.n}</b>

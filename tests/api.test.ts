@@ -533,3 +533,39 @@ describe("server data matches page.tsx (drift check)", () => {
     assert.ok(page.includes("3240"));
   });
 });
+
+describe("hardening round 2", () => {
+  test("oversized request body is rejected (413)", async () => {
+    const u = await newUser();
+    const big = await call("payments", "POST", "/api/payments", { cookie: u.cookie, body: { amount: 1, receiver: "x".repeat(20_000), pin: "1234" } });
+    assert.equal(big.status, 413);
+    assert.equal(big.data.error.code, "PAYLOAD_TOO_LARGE");
+  });
+
+  test("idempotency key reused with a DIFFERENT amount is rejected, same amount replays", async () => {
+    const u = await newUser();
+    const key = "reuse-key-00001";
+    assert.equal((await pay(u.cookie, { amount: 100, idempotencyKey: key })).status, 201);
+    const bad = await pay(u.cookie, { amount: 9000, idempotencyKey: key });
+    assert.equal(bad.status, 409);
+    assert.equal(bad.data.error.code, "IDEMPOTENCY_KEY_REUSED");
+    assert.equal((await pay(u.cookie, { amount: 100, idempotencyKey: key })).data.replayed, true);
+    assert.equal((await stateOf(u.cookie)).banks[0].balance, 48130); // sirf ek baar ₹100 kata
+    const gk = "reuse-gold-0001";
+    await call("gold", "POST", "/api/gold/buy", { cookie: u.cookie, body: { amount: 500, idempotencyKey: gk } });
+    const g2 = await call("gold", "POST", "/api/gold/buy", { cookie: u.cookie, body: { amount: 700, idempotencyKey: gk } });
+    assert.equal(g2.data.error.code, "IDEMPOTENCY_KEY_REUSED");
+  });
+
+  test("EK_DEMO_MODE=false turns the free deposit endpoint off", async () => {
+    const u = await newUser();
+    process.env.EK_DEMO_MODE = "false";
+    try {
+      const r = await call("deposit", "POST", "/api/accounts/deposit", { cookie: u.cookie, body: { amount: 100 } });
+      assert.equal(r.status, 404);
+    } finally {
+      delete process.env.EK_DEMO_MODE;
+    }
+    assert.equal((await call("deposit", "POST", "/api/accounts/deposit", { cookie: u.cookie, body: { amount: 100 } })).status, 201);
+  });
+});

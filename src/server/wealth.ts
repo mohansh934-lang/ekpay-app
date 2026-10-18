@@ -6,13 +6,10 @@ import { rupees, toPaise } from "./money";
 import { findOffering } from "./catalog";
 import { getQuote } from "./market";
 import {
-  accountLabel, creditAccount, debitAccount, findTxnByKey, getAccount, insertTxn, mapTxn,
+  accountLabel, creditAccount, debitAccount, getAccount, insertTxn, replayFor,
 } from "./ledger";
 
-const replay = (userId: number, key: string) => {
-  const prev = findTxnByKey(userId, key);
-  return prev ? { replayed: true as const, transaction: mapTxn(prev) } : null;
-};
+const replay = (userId: number, key: string, expectedPaise?: number) => replayFor(userId, key, expectedPaise);
 const optAccount = (v: unknown) => (v === undefined ? undefined : posInt(v, "bankAccountId"));
 
 /** Stock buy/sell. Price SERVER decide karta hai; client price bhej bhi de to ignore. */
@@ -27,7 +24,7 @@ export function trade(userId: number, b: Record<string, unknown>) {
   const accountId = optAccount(b.bankAccountId);
 
   return transaction((db) => {
-    if (key) { const r = replay(userId, key); if (r) return r; }
+    if (key) { const r = replay(userId, key, quote.pricePaise * qty); if (r) return r; }
     const acc = getAccount(db, userId, accountId);
     const price = quote.pricePaise;
     const total = price * qty;
@@ -75,7 +72,7 @@ export function buyGold(userId: number, b: Record<string, unknown>) {
   if (ug < 1) throw new ApiError(400, "AMOUNT_TOO_LOW", "Amount bahut kam hai");
 
   return transaction((db) => {
-    if (key) { const r = replay(userId, key); if (r) return r; }
+    if (key) { const r = replay(userId, key, amountPaise); if (r) return r; }
     const acc = getAccount(db, userId, accountId);
     debitAccount(db, userId, acc.id, amountPaise);
     db.prepare("UPDATE wallets SET gold_ug = gold_ug + ? WHERE user_id = ?").run(ug, userId);
@@ -123,7 +120,7 @@ export function createSip(userId: number, b: Record<string, unknown>) {
   const accountId = optAccount(b.bankAccountId);
 
   return transaction((db) => {
-    if (payFirst && key) { const r = replay(userId, key); if (r) return { ...r, sip: null }; }
+    if (payFirst && key) { const r = replay(userId, key, amountPaise); if (r) return { ...r, sip: null }; }
     const count = (db.prepare("SELECT COUNT(*) AS c FROM sips WHERE user_id = ?").get(userId) as { c: number }).c;
     if (count >= 20) throw new ApiError(409, "SIP_LIMIT", "Max 20 SIPs allowed hain");
 
@@ -190,7 +187,7 @@ export function selfTransfer(userId: number, b: Record<string, unknown>) {
   const key = idemKey(b.idempotencyKey);
 
   return transaction((db) => {
-    if (key) { const r = replay(userId, key); if (r) return r; }
+    if (key) { const r = replay(userId, key, amountPaise); if (r) return r; }
     const from = getAccount(db, userId, fromId);
     const to = getAccount(db, userId, toId); // dono accounts isi user ke hone chahiye
     debitAccount(db, userId, from.id, amountPaise);
@@ -217,7 +214,7 @@ export function buyOffering(userId: number, b: Record<string, unknown>) {
   const accountId = optAccount(b.bankAccountId);
 
   return transaction((db) => {
-    if (key) { const r = replay(userId, key); if (r) return r; }
+    if (key) { const r = replay(userId, key, offering.pricePaise); if (r) return r; }
     const acc = getAccount(db, userId, accountId);
     debitAccount(db, userId, acc.id, offering.pricePaise);
     const t = insertTxn(db, {
@@ -234,13 +231,14 @@ export function buyOffering(userId: number, b: Record<string, unknown>) {
  * (paisa bank se aata hai). Isliye per-user rate limit + per-click cap.
  */
 export function demoDeposit(userId: number, b: Record<string, unknown>) {
+  if (!config.demoMode) throw new ApiError(404, "NOT_FOUND", "Not found");
   rateLimit(`deposit:${userId}`, 20, 60 * 60 * 1000);
   const amountPaise = toPaise(b.amount, { max: config.maxDepositPaise });
   const key = idemKey(b.idempotencyKey);
   const accountId = optAccount(b.bankAccountId);
 
   return transaction((db) => {
-    if (key) { const r = replay(userId, key); if (r) return r; }
+    if (key) { const r = replay(userId, key, amountPaise); if (r) return r; }
     const acc = getAccount(db, userId, accountId);
     creditAccount(db, userId, acc.id, amountPaise);
     const t = insertTxn(db, {

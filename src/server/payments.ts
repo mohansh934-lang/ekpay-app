@@ -5,16 +5,13 @@ import { idemKey, optStr, posInt, str } from "./http";
 import { toPaise, rupees } from "./money";
 import { verifyPin } from "./auth";
 import {
-  accountLabel, debitAccount, findTxnByKey, getAccount, insertTxn, mapTxn,
+  accountLabel, debitAccount, getAccount, insertTxn, replayFor,
 } from "./ledger";
 
 const VPA_RE = /^[a-zA-Z0-9.\-_]{2,64}@[a-zA-Z]{2,32}$/;
 const CATEGORY_RE = /^[A-Za-z][A-Za-z &]{1,29}$/;
 
-const replay = (userId: number, key: string) => {
-  const prev = findTxnByKey(userId, key);
-  return prev ? { replayed: true as const, transaction: mapTxn(prev) } : null;
-};
+const replay = (userId: number, key: string, expectedPaise: number) => replayFor(userId, key, expectedPaise);
 
 /** UPI payment: bank se (PIN zaroori) ya UPI Lite se (PIN nahi, chhote amount). */
 export async function pay(userId: number, b: Record<string, unknown>) {
@@ -29,7 +26,7 @@ export async function pay(userId: number, b: Record<string, unknown>) {
   const key = idemKey(b.idempotencyKey);
   const accountId = b.bankAccountId === undefined ? undefined : posInt(b.bankAccountId, "bankAccountId");
 
-  if (key) { const r = replay(userId, key); if (r) return r; }
+  if (key) { const r = replay(userId, key, amountPaise); if (r) return r; }
 
   if (method === "bank") await verifyPin(userId, b.pin);
   else if (amountPaise > config.upiLite.maxTxnPaise) {
@@ -37,7 +34,7 @@ export async function pay(userId: number, b: Record<string, unknown>) {
   }
 
   return transaction((db) => {
-    if (key) { const r = replay(userId, key); if (r) return r; } // race: dono request ek saath aayi
+    if (key) { const r = replay(userId, key, amountPaise); if (r) return r; } // race: dono request ek saath aayi
 
     let source = "UPI Lite", bankLabel = "UPI Lite Wallet", bankAccountId: number | null = null;
     let newBalance: number;
@@ -66,12 +63,12 @@ export async function topUpLite(userId: number, b: Record<string, unknown>) {
   const amountPaise = toPaise(b.amount, { max: config.upiLite.maxBalancePaise });
   const accountId = b.bankAccountId === undefined ? undefined : posInt(b.bankAccountId, "bankAccountId");
   const key = idemKey(b.idempotencyKey);
-  if (key) { const r = replay(userId, key); if (r) return r; }
+  if (key) { const r = replay(userId, key, amountPaise); if (r) return r; }
 
   await verifyPin(userId, b.pin);
 
   return transaction((db) => {
-    if (key) { const r = replay(userId, key); if (r) return r; }
+    if (key) { const r = replay(userId, key, amountPaise); if (r) return r; }
     const w = db.prepare("SELECT lite_balance_paise AS b FROM wallets WHERE user_id = ?").get(userId) as { b: number };
     if (w.b + amountPaise > config.upiLite.maxBalancePaise) {
       throw new ApiError(400, "LITE_BALANCE_LIMIT", `UPI Lite balance max ₹${rupees(config.upiLite.maxBalancePaise)} ho sakta hai`);

@@ -27,6 +27,20 @@ const COLS = "id, direction, category, counterparty, amount_paise, source, bank_
 export const findTxnByKey = (userId: number, key: string) =>
   one<TxnRow>(`SELECT ${COLS} FROM transactions WHERE user_id = ? AND idempotency_key = ?`, userId, key);
 
+/**
+ * Idempotency: same key dobara aaye to purana result lautao. Lekin agar amount alag hai to reject karo
+ * (client bug ya galat key reuse, warna user ko lagega ₹9,000 gaye jabki purana ₹100 wala result mila).
+ */
+export function replayFor(userId: number, key: string | undefined, expectedPaise?: number) {
+  if (!key) return null;
+  const prev = findTxnByKey(userId, key);
+  if (!prev) return null;
+  if (expectedPaise !== undefined && prev.amount_paise !== expectedPaise) {
+    throw new ApiError(409, "IDEMPOTENCY_KEY_REUSED", "Ye idempotencyKey pehle kisi aur amount ke saath use ho chuki hai");
+  }
+  return { replayed: true as const, transaction: mapTxn(prev) };
+}
+
 export function insertTxn(
   db: DB,
   t: {

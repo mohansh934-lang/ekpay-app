@@ -51,13 +51,19 @@ function assertSameOrigin(req: Request) {
   }
 }
 
+const MAX_BODY_BYTES = 16 * 1024;
+
 export async function readJson(req: Request): Promise<Record<string, unknown>> {
   const ct = req.headers.get("content-type") ?? "";
   if (!ct.toLowerCase().includes("application/json")) {
     throw new ApiError(415, "UNSUPPORTED_MEDIA_TYPE", "Content-Type application/json hona chahiye");
   }
+  const declared = Number(req.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY_BYTES) throw new ApiError(413, "PAYLOAD_TOO_LARGE", "Request bahut badi hai");
+  const text = await req.text();
+  if (text.length > MAX_BODY_BYTES) throw new ApiError(413, "PAYLOAD_TOO_LARGE", "Request bahut badi hai");
   let body: unknown;
-  try { body = await req.json(); } catch { throw new ApiError(400, "INVALID_JSON", "Body valid JSON nahi hai"); }
+  try { body = JSON.parse(text); } catch { throw new ApiError(400, "INVALID_JSON", "Body valid JSON nahi hai"); }
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     throw new ApiError(400, "INVALID_BODY", "Body JSON object hona chahiye");
   }

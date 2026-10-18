@@ -31,6 +31,11 @@ export const config = {
     return "dev-only-pepper-change-me-in-production";
   },
 
+  /** Demo-only features (jaise free "add money" deposit). Real deployment me EK_DEMO_MODE=false. */
+  get demoMode(): boolean {
+    return process.env.EK_DEMO_MODE !== "false";
+  },
+
   get secureCookies(): boolean {
     return process.env.NODE_ENV === "production";
   },
