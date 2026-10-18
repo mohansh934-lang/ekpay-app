@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ek App – Super Money App (demo)
 
-## Getting Started
+UPI, bills, stocks, gold, loans ka ek-hi-jagah demo app. **Ye simulator hai**: koi real bank / NPCI / broker
+integration nahi hai, paisa sirf app ke database me move hota hai.
 
-First, run the development server:
+## Stack
+Next.js (App Router) · TypeScript · SQLite (`node:sqlite`) · scrypt · koi extra backend dependency nahi.
 
+## Chalane ka tarika
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Node 22.13+ chahiye
+npm install
+npm run dev        # http://localhost:3000
+npm test           # 37 backend tests
 ```
+Production me `.env.example` dekho (`EK_PEPPER` zaroori hai).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Backend design
+| Cheez | Kaise |
+|---|---|
+| Database | SQLite, WAL mode, foreign keys ON, `CHECK` constraints (balance kabhi negative nahi) |
+| Money | Integer **paise** (float nahi). Gold integer **microgram** |
+| Auth | Phone + password, server-side sessions (HttpOnly, SameSite=Lax cookie, DB me sirf token ka hash) |
+| Secrets | Password aur UPI PIN scrypt + salt + server pepper se hashed |
+| Brute-force | 5 galat password / PIN → 15 min lock. Attempt verify se *pehle* reserve hota hai (race-proof) |
+| Payments | Atomic DB transaction: balance guard + ledger entry ek saath. Idempotency key se double-charge nahi |
+| Authorization | Har query `user_id` se scoped, dusre user ka account/loan/SIP chhu nahi sakte |
+| Prices | Server decide karta hai (stock, gold, EMI, insurance/FD/IPO prices). Client ka bheja price ignore. Tests check karte hain ki UI aur server ke prices match rahein |
+| CSRF | Origin / Sec-Fetch-Site check + SameSite cookie + sirf `application/json` |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Code: `src/server/*` (logic) aur `src/app/api/*/route.ts` (patle HTTP wrappers).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## API
+Sab responses `{ "success": true, ... }` ya `{ "success": false, "error": { "code", "message" } }`.
+Amounts rupees me (number). Paise conversion server karta hai (max 2 decimals).
 
-## Learn More
+| Method | Path | Body / Query | Notes |
+|---|---|---|---|
+| POST | `/api/auth/register` | `phone, name, password(8+), upiPin(4 ya 6 digit)` | Demo accounts + data milta hai |
+| POST | `/api/auth/login` | `phone, password` | Cookie set |
+| POST | `/api/auth/logout` | – | |
+| GET | `/api/auth/me` | – | |
+| GET | `/api/state` | – | Poora dashboard snapshot |
+| POST | `/api/payments` | `amount, receiver, pin, [bankAccountId, vpa, note, category, method:"lite", idempotencyKey]` | `method:"lite"` me PIN nahi chahiye (max ₹500) |
+| POST | `/api/upi-lite/topup` | `amount, pin, [bankAccountId, idempotencyKey]` | Wallet cap ₹2,000 |
+| GET | `/api/transactions` | `?limit=20&before=<id>&category=&q=` | Cursor pagination, `nextCursor` |
+| POST | `/api/trades` | `symbol, side:"buy"|"sell", qty, [idempotencyKey]` | Weighted average cost |
+| GET | `/api/market` | – | Quotes (abhi static) |
+| POST | `/api/gold/buy` | `amount(₹10+), [idempotencyKey]` | |
+| POST | `/api/loans/emi` | `loanId, [idempotencyKey]` | EMI amount server se |
+| POST | `/api/card/pay` | `[amount, bankAccountId, idempotencyKey]` | Default poora due, `amount` se partial |
+| POST | `/api/transfers/self` | `fromAccountId, toAccountId, amount, [idempotencyKey]` | Do ledger entries (category "Self Transfer") |
+| POST | `/api/offerings/buy` | `category (insurance/fd/ipo/nps), title, [idempotencyKey]` | Price server ke catalog se |
+| POST | `/api/accounts/deposit` | `amount (max ₹50,000), [bankAccountId, idempotencyKey]` | **Sirf demo** ("add money" button), rate limited |
+| POST | `/api/auth/change-pin` | `currentPin, newPin` | Purana PIN verify hota hai |
+| PATCH | `/api/settings` | `budget` | |
+| POST / DELETE | `/api/sips`, `/api/sips/:id` | `name, amount, dayOfMonth(1-28), [payFirstInstallment:true, idempotencyKey]` | `payFirstInstallment` me pehli installment usi transaction me katti hai |
 
-To learn more about Next.js, take a look at the following resources:
+Error codes jo frontend ko handle karne chahiye: `INVALID_PIN` (`remainingAttempts`), `LOCKED` (`Retry-After` header),
+`INSUFFICIENT_FUNDS`, `UNAUTHORIZED`, `RATE_LIMITED`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Limits / aage ka kaam
+- SQLite ek file hai: **serverless (Vercel) pe data persist nahi hoga**. VPS / Railway / Render (disk ke saath) pe chalao,
+  ya `src/server/db.ts` ko Postgres ke saath badlo.
+- Rate limiter in-memory hai (single server). Multi-server pe Redis chahiye.
+- Market prices static hain (`src/server/market.ts`), real feed yahin plug hoga.
+- Real money ke liye licensed PSP / bank partner, KYC, aur audit logging zaroori hoga.
+- UI me abhi bhi local hain (server pe save nahi hote): **Autopay mandates**, **contacts / naye payee**, **notifications**, **Split bill**. Ye paisa move nahi karte.
+- Database schema badalna ho to `src/server/db.ts` me naya migration add karo (purane ko mat chhedo). Purane DB apne aap upgrade ho jaate hain.

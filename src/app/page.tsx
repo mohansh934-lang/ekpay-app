@@ -3,6 +3,23 @@ import React, { useState, useEffect, useRef } from "react";
 
 const inr = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 
+// ---- Server data -> UI shape helpers ----
+const fmtWhen = (iso: string) => {
+  const d = new Date(iso);
+  const now = new Date();
+  const time = d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase();
+  const key = (x: Date) => x.getFullYear() * 10000 + x.getMonth() * 100 + x.getDate();
+  const yest = new Date(now);
+  yest.setDate(now.getDate() - 1);
+  if (key(d) === key(now)) return `Today, ${time}`;
+  if (key(d) === key(yest)) return `Yesterday, ${time}`;
+  return `${d.getDate()} ${d.toLocaleString("en-IN", { month: "short" })}, ${time}`;
+};
+const mapServerTxn = (t: any) => ({
+  id: t.id, mode: t.source, n: t.counterparty, cat: t.category, cr: t.type === "credit",
+  amt: t.amount, d: fmtWhen(t.createdAt), bank: t.bank, ref: t.ref,
+});
+
 const I: Record<string, string> = {
   home: '<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
   rec: '<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
@@ -449,9 +466,32 @@ export default function EkAppFullStack() {
   const [unlocked, setUnlocked] = useState(false);
   const [lockPin, setLockPin] = useState("");
   const [soundOn, setSoundOn] = useState(true);
-  const [userPin, setUserPin] = useState("1234");
   const [intlUpi, setIntlUpi] = useState(false);
   const [upiLiteBal, setUpiLiteBal] = useState(420);
+
+  // ---- Auth / server connection ----
+  const [authState, setAuthState] = useState<"loading" | "out" | "in">("loading");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authPhone, setAuthPhone] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authPass, setAuthPass] = useState("");
+  const [authPin, setAuthPin] = useState("");
+  const [authErr, setAuthErr] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [me, setMe] = useState<{ name: string; phone: string; upiId: string } | null>(null);
+  const [accountIds, setAccountIds] = useState<number[]>([]);
+  const [payBusy, setPayBusy] = useState(false);
+  const [pinErr, setPinErr] = useState("");
+  const [curPin, setCurPin] = useState("");
+  const payKey = useRef("");
+  const [loanId, setLoanId] = useState<number | null>(null);
+  const [pinTask, setPinTask] = useState<null | {
+    label: string;
+    amount: number;
+    run: (pin: string) => Promise<{ ok: boolean; message: string }>;
+  }>(null);
+  const busyRef = useRef(false);
+  const budgetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [navHist, setNavHist] = useState<string[]>(["home"]);
   const view = navHist[navHist.length - 1];
@@ -520,7 +560,7 @@ export default function EkAppFullStack() {
 
   const [notifs, setNotifs] = useState([
     { title: "EkPay UPI Lite Active", body: "Pin-less payments up to ₹500 enabled on your account", time: "2h ago" },
-    { title: "Crunchyroll Autopay Active", body: "₹99 monthly mandate verified on aarav@ekapp", time: "Yesterday" },
+    { title: "Crunchyroll Autopay Active", body: "₹99 monthly mandate verified on your UPI ID", time: "Yesterday" },
     { title: "Electricity Bill Due", body: "MPPKVVCL bill of ₹1,420 due in 3 days", time: "Yesterday" },
   ]);
   const [unread, setUnread] = useState(3);
@@ -532,7 +572,7 @@ export default function EkAppFullStack() {
   const [toast, setToast] = useState("");
   const [chartRange, setChartRange] = useState("1M");
 
-  const [numModal, setNumModal] = useState<null | "mobile" | "bank" | "self" | "changepin">(null);
+  const [numModal, setNumModal] = useState<null | "mobile" | "bank" | "self" | "changepin" | "confirmpin">(null);
   const [numInput, setNumInput] = useState("");
   const [selfFrom, setSelfFrom] = useState(0);
   const [selfTo, setSelfTo] = useState(1);
@@ -636,58 +676,111 @@ export default function EkAppFullStack() {
     setNavHist([r]);
   };
 
-  useEffect(() => {
-    fetch("/api/state")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.banks) setBanks(d.banks);
-        if (d.holdings) setHoldings(d.holdings);
-        if (d.sips) setSips(d.sips);
-        if (typeof d.goldGrams === "number") setGoldGrams(d.goldGrams);
-        if (typeof d.emiPaid === "number") setEmiPaid(d.emiPaid);
-        if (typeof d.cardDue === "number") setCardDue(d.cardDue);
-        if (typeof d.budget === "number") setBudget(d.budget);
-        if (d.customTxns?.length) setTxns((prev) => [...d.customTxns, ...prev]);
-      })
-      .catch(() => {});
-  }, []);
+  const newKey = () =>
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : "k" + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
 
-  const syncServer = async (patch: any) => {
+  // Har server call yahin se. Session expire hua (401 UNAUTHORIZED) to login screen par bhej deta hai.
+  const apiCall = async (method: string, url: string, body?: unknown) => {
     try {
-      await fetch("/api/state", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
+      const res = await fetch(url, {
+        method,
+        headers: body ? { "Content-Type": "application/json" } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
       });
-    } catch {}
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 && data?.error?.code === "UNAUTHORIZED") {
+        setAuthState("out");
+        setUnlocked(false);
+      }
+      return {
+        ok: res.ok && data.success !== false,
+        status: res.status,
+        data,
+        code: data?.error?.code as string | undefined,
+        message: (data?.error?.message as string) || "Kuch gadbad hui, dobara try karo",
+      };
+    } catch {
+      return { ok: false, status: 0, data: {} as any, code: "NETWORK", message: "Network error, dobara try karo" };
+    }
   };
 
-  const recordPayment = (title: string, amt: number, cat = "Transfer", cr = false, bIdx = 0, viaLite = false) => {
-    if (viaLite) {
-      setUpiLiteBal((prev) => prev - amt);
+  // Server se poora data laata hai (balances, holdings, transactions...) aur screen update karta hai.
+  const loadAll = async () => {
+    const st = await apiCall("GET", "/api/state");
+    if (!st.ok) {
+      setAuthState("out");
+      return false;
     }
-    const nextBanks: [string, number][] = viaLite
-      ? banks
-      : banks.map((b, i) => (i === bIdx ? [b[0], cr ? b[1] + amt : b[1] - amt] : b));
+    const d = st.data;
+    setMe(d.user);
+    setAccountIds(d.banks.map((b: any) => b.id));
+    setBanks(d.banks.map((b: any) => [b.label, b.balance] as [string, number]));
+    setHoldings(Object.fromEntries(d.holdings.map((h: any) => [h.symbol, { qty: h.qty, avg: h.avgPrice }])));
+    setSips(d.sips.map((x: any) => ({ name: x.name, amt: x.amount, day: `${x.dayOfMonth}th`, active: true })));
+    setGoldGrams(d.goldGrams);
+    setCardDue(d.cardDue);
+    setBudget(d.budget);
+    setUpiLiteBal(d.upiLiteBalance);
+    if (d.loans?.[0]) {
+      setEmiPaid(d.loans[0].paidEmis);
+      setLoanId(d.loans[0].id);
+    }
+    const tx = await apiCall("GET", "/api/transactions?limit=50");
+    if (tx.ok) setTxns(tx.data.transactions.map(mapServerTxn));
+    setAuthState("in");
+    setUnlocked(true);
+    return true;
+  };
 
-    const newTxn = {
-      id: Date.now() + Math.floor(Math.random() * 1000000),
-      mode: viaLite ? "UPI Lite" : "EkPay UPI",
-      n: title,
-      cat,
-      cr,
-      amt,
-      d: "Just now",
-      bank: viaLite ? "UPI Lite Wallet" : banks[bIdx][0],
-      ref: "4" + Math.floor(100000000000 + Math.random() * 900000000000),
-    };
-    setBanks(nextBanks);
-    setTxns((p) => [newTxn, ...p]);
-    syncServer({ banks: nextBanks, newTxn });
-    pushNotif(
-      cr ? "Money Received" : viaLite ? "Paid via UPI Lite (No PIN)" : "Payment Successful",
-      `${inr(amt)} ${cr ? "credited to" : "debited from"} ${viaLite ? "UPI Lite" : banks[bIdx][0]}`
-    );
+  useEffect(() => {
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const submitAuth = async () => {
+    if (authBusy) return;
+    setAuthErr("");
+    if (!/^[6-9]\d{9}$/.test(authPhone)) return setAuthErr("Valid 10-digit mobile number daalo");
+    if (authMode === "register") {
+      if (authName.trim().length < 2) return setAuthErr("Apna naam daalo");
+      if (authPass.length < 8) return setAuthErr("Password kam se kam 8 characters ka hona chahiye");
+      if (!/^\d{4}$/.test(authPin)) return setAuthErr("4-digit UPI PIN set karo");
+    }
+    setAuthBusy(true);
+    const r =
+      authMode === "login"
+        ? await apiCall("POST", "/api/auth/login", { phone: authPhone, password: authPass })
+        : await apiCall("POST", "/api/auth/register", {
+            phone: authPhone, name: authName.trim(), password: authPass, upiPin: authPin,
+          });
+    if (!r.ok) {
+      setAuthBusy(false);
+      return setAuthErr(r.message);
+    }
+    setAuthPass("");
+    setAuthPin("");
+    await loadAll();
+    setAuthBusy(false);
+    setNavHist(["home"]);
+  };
+
+  // Ek time par ek hi server action (double-tap se double payment nahi hoga).
+  const act = async (fn: () => Promise<void>) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    try {
+      await fn();
+    } finally {
+      busyRef.current = false;
+    }
+  };
+
+  // Server action ke baad: sab kuch server se dobara load + notification.
+  const payDone = async (title: string, body: string) => {
+    await loadAll();
+    pushNotif(title, body);
   };
 
   const triggerCheckout = (merchantTitle: string, amountNum: number, noteStr: string) => {
@@ -723,20 +816,45 @@ export default function EkAppFullStack() {
     showToast("Official receipt downloaded!");
   };
 
-  const handlePinKey = (k: string) => {
-    if (k === ".") return;
+  const handlePinKey = async (k: string) => {
+    if (k === "." || payBusy) return;
     tone(680, 0.04);
+    setPinErr("");
     const next = k === "⌫" ? pin.slice(0, -1) : (pin + k).slice(0, 4);
     setPin(next);
-    if (next.length === 4) {
-      const a = Number(payAmt);
-      recordPayment(contacts[payToIdx][0] + (payNote ? ` (${payNote})` : ""), a, "Bills", false, payBankIdx, false);
-      setPinSheet(false);
+    if (next.length !== 4) return;
+
+    setPayBusy(true);
+    if (!payKey.current) payKey.current = newKey(); // network retry par double-charge nahi hoga
+    const a = Number(payAmt);
+    const isBill = contacts[payToIdx][1] === "Verified Bill/Merchant";
+    const r = await apiCall("POST", "/api/payments", {
+      amount: a,
+      receiver: contacts[payToIdx][0].slice(0, 80),
+      pin: next,
+      note: payNote ? payNote.slice(0, 100) : undefined,
+      category: isBill ? "Bills" : "Transfer",
+      bankAccountId: accountIds[payBankIdx],
+      idempotencyKey: payKey.current,
+    });
+    setPayBusy(false);
+
+    if (!r.ok) {
+      tone(300, 0.2);
       setPin("");
-      setPayAmt("");
-      setPayNote("");
-      setNavHist(["home", "done"]);
+      if (r.code === "INVALID_PIN" || r.code === "LOCKED" || r.code === "NETWORK") return setPinErr(r.message);
+      setPinSheet(false);
+      payKey.current = "";
+      return showToast(r.message);
     }
+    payKey.current = "";
+    await loadAll();
+    pushNotif("Payment Successful", `${inr(a)} debited from ${banks[payBankIdx][0]}`);
+    setPinSheet(false);
+    setPin("");
+    setPayAmt("");
+    setPayNote("");
+    setNavHist(["home", "done"]);
   };
 
   const handleLockKey = (k: string) => {
@@ -753,6 +871,11 @@ export default function EkAppFullStack() {
     }
   };
 
+  const myName = me?.name ?? "Ek User";
+  const myUpi = me?.upiId ?? "user@ekpay";
+  const myPhone = me ? `+91 ${me.phone.slice(0, 5)} ${me.phone.slice(5)}` : "";
+  const initials = myName.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+
   const totalBal = banks.reduce((a, b) => a + b[1], 0);
   const stockVal = Object.entries(holdings).reduce((s, [k, v]) => {
     const st = ST.find((x) => x[0] === k);
@@ -761,11 +884,11 @@ export default function EkAppFullStack() {
   const portfolioTotal = stockVal + goldGrams * 7820 + 64000;
 
   const catSpends: Record<string, number> = {};
-  txns.filter((t) => !t.cr).forEach((t) => {
+  txns.filter((t) => !t.cr && t.cat !== "Self Transfer").forEach((t) => {
     catSpends[t.cat] = (catSpends[t.cat] || 0) + t.amt;
   });
   const totalSpent = Object.values(catSpends).reduce((a, b) => a + b, 0) || 1;
-  const totalReceived = txns.filter((t) => t.cr).reduce((a, b) => a + b.amt, 0);
+  const totalReceived = txns.filter((t) => t.cr && t.cat !== "Self Transfer").reduce((a, b) => a + b.amt, 0);
 
   const [baseView, subParam] = view.split(":");
   const isRootTab = ROOT_TABS.has(view);
@@ -779,13 +902,70 @@ export default function EkAppFullStack() {
             <div className="lg">E</div>
             <b style={{ fontSize: 24, letterSpacing: -0.5 }}>Ek App</b>
             <p style={{ color: "rgba(255,255,255,.7)", fontSize: 13, marginTop: 4 }}>
-              Sab kuch, ek hi jagah • 100% Secure UPI
+              Sab kuch, ek hi jagah
             </p>
           </div>
         </div>
       )}
 
-      {!unlocked ? (
+      {authState === "loading" ? null : authState === "out" ? (
+        <>
+          <div id="stb">
+            <span>9:41</span>
+            <div className="notch"></div>
+            <span>5G • 100%</span>
+          </div>
+          <div style={{ padding: "26px 20px 20px", textAlign: "center", overflowY: "auto", height: "calc(100% - 32px)" }}>
+            <div style={{ width: 64, height: 64, borderRadius: 20, background: "var(--pr)", color: "#fff", display: "grid", placeItems: "center", fontSize: 30, fontWeight: 700, margin: "0 auto 12px" }}>
+              E
+            </div>
+            <b style={{ fontSize: 19 }}>{authMode === "login" ? "Welcome back" : "Create your Ek account"}</b>
+            <p className="mu" style={{ marginTop: 4 }}>
+              {authMode === "login" ? "Login karke apna paisa dekho" : "Demo accounts aur data aapko mil jayega"}
+            </p>
+            <div style={{ textAlign: "left", marginTop: 16 }}>
+              {authMode === "register" && (
+                <input placeholder="Full name" maxLength={60} value={authName} onChange={(e) => setAuthName(e.target.value)} />
+              )}
+              <input
+                placeholder="10-digit mobile number"
+                inputMode="numeric"
+                maxLength={10}
+                value={authPhone}
+                onChange={(e) => setAuthPhone(e.target.value.replace(/\D/g, ""))}
+              />
+              <input
+                type="password"
+                placeholder={authMode === "login" ? "Password" : "Password (min 8 characters)"}
+                value={authPass}
+                onChange={(e) => setAuthPass(e.target.value)}
+              />
+              {authMode === "register" && (
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="Set 4-digit UPI PIN"
+                  value={authPin}
+                  onChange={(e) => setAuthPin(e.target.value.replace(/\D/g, ""))}
+                />
+              )}
+            </div>
+            {authErr && <p style={{ color: "var(--rd)", marginTop: 10, fontSize: 12.5 }}>{authErr}</p>}
+            <button className="btn" style={{ marginTop: 14 }} disabled={authBusy} onClick={submitAuth}>
+              {authBusy ? "Please wait…" : authMode === "login" ? "Login" : "Create account"}
+            </button>
+            <button
+              className="btn o"
+              style={{ marginTop: 8 }}
+              onClick={() => { setAuthMode(authMode === "login" ? "register" : "login"); setAuthErr(""); }}
+            >
+              {authMode === "login" ? "New here? Create account" : "Already have an account? Login"}
+            </button>
+          </div>
+          <div id="hbar"></div>
+        </>
+      ) : !unlocked ? (
         <>
           <div id="stb">
             <span>9:41</span>
@@ -855,7 +1035,7 @@ export default function EkAppFullStack() {
                   style={{ background: "#e0e7ff", color: "#3730a3", cursor: "pointer", border: "2px solid var(--pr)" }}
                   onClick={() => go("profile")}
                 >
-                  AM
+                  {initials}
                 </span>
                 {view === "home" ? (
                   <button className="sb2" onClick={() => tab("txns")}>
@@ -903,7 +1083,7 @@ export default function EkAppFullStack() {
               <>
                 <div className="hero">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 5 }}>
-                    <small>Total balance • aarav@ekapp</small>
+                    <small>Total balance • {myUpi}</small>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -1038,10 +1218,10 @@ export default function EkAppFullStack() {
               <>
                 <div className="c p" style={{ textAlign: "center" }}>
                   <span className="av" style={{ width: 62, height: 62, background: "#e0e7ff", color: "#3730a3", fontSize: 22, margin: "0 auto 8px" }}>
-                    AM
+                    {initials}
                   </span>
-                  <b style={{ fontSize: 17 }}>Aarav Mehta</b>
-                  <p className="mu">UPI ID: aarav@ekapp • +91 98765 00001</p>
+                  <b style={{ fontSize: 17 }}>{myName}</b>
+                  <p className="mu">UPI ID: {myUpi} • {myPhone}</p>
 
                   {/* Personal Receive QR Code right inside Profile! */}
                   <svg viewBox="0 0 120 120" width="148" height="148" style={{ margin: "12px auto 8px", background: "#fff", padding: 8, borderRadius: 12, border: "1px solid var(--ln)" }}>
@@ -1053,7 +1233,7 @@ export default function EkAppFullStack() {
                     <rect x="20" y="90" width="10" height="10" fill="#4338ca" />
                     <path d="M50 20h10v20H50zM50 50h20v20H50zM80 50h20v10H80zM50 80h15v25H50zM75 75h30v30H75z" fill="#0f172a" />
                   </svg>
-                  <small style={{ display: "block" }}>Scan with any UPI app to pay Aarav Mehta</small>
+                  <small style={{ display: "block" }}>Scan with any UPI app to pay {myName}</small>
                 </div>
 
                 <h3>My Payment Methods & Wallets</h3>
@@ -1088,10 +1268,16 @@ export default function EkAppFullStack() {
                       </span>
                       <button
                         className="chip"
-                        onClick={() => {
-                          recordPayment("Self Deposit / Top-up", 10000, "Income", true, i);
-                          showToast("₹10,000 credited to " + b[0]);
-                        }}
+                        onClick={() =>
+                          act(async () => {
+                            const r = await apiCall("POST", "/api/accounts/deposit", {
+                              amount: 10000, bankAccountId: accountIds[i], idempotencyKey: newKey(),
+                            });
+                            if (!r.ok) return showToast(r.message);
+                            await payDone("Money Received", `${inr(10000)} credited to ${b[0]}`);
+                            showToast("₹10,000 credited to " + b[0]);
+                          })
+                        }
                       >
                         + ₹10k
                       </button>
@@ -1106,7 +1292,7 @@ export default function EkAppFullStack() {
               <>
                 <h3>UPI Security & Controls</h3>
                 <div className="c">
-                  <button className="row" onClick={() => { setNumInput(""); setNumModal("changepin"); }}>
+                  <button className="row" onClick={() => { setNumInput(""); setCurPin(""); setNumModal("changepin"); }}>
                     <span className="it"><Icon n="lock" /></span>
                     <span className="m">
                       <b>Change 4-Digit UPI PIN</b>
@@ -1130,13 +1316,22 @@ export default function EkAppFullStack() {
                     <b className={intlUpi ? "cr" : "mu"}>{intlUpi ? "ON" : "OFF"}</b>
                   </button>
 
-                  <button className="row" onClick={() => setUnlocked(false)}>
+                  <button
+                    className="row"
+                    onClick={async () => {
+                      await apiCall("POST", "/api/auth/logout");
+                      setAuthState("out");
+                      setUnlocked(false);
+                      setMe(null);
+                      setNavHist(["home"]);
+                    }}
+                  >
                     <span className="it"><Icon n="lock" /></span>
                     <span className="m">
-                      <b>Biometric & Passcode App Lock</b>
-                      <small>Tap to lock Ek App immediately</small>
+                      <b>Log out</b>
+                      <small>{me ? `${me.name} • ${me.phone}` : "Sign out of Ek App"}</small>
                     </span>
-                    <span className="mu">Lock 🔒</span>
+                    <span className="mu">Logout →</span>
                   </button>
                 </div>
 
@@ -1194,7 +1389,7 @@ export default function EkAppFullStack() {
                     <span className="it"><Icon n="user" /></span>
                     <span className="m">
                       <b>View My Profile & UPI QR</b>
-                      <small>aarav@ekapp • Linked Banks</small>
+                      <small>{myUpi} • Linked Banks</small>
                     </span>
                     <span className="mu">Open →</span>
                   </button>
@@ -1589,9 +1784,20 @@ export default function EkAppFullStack() {
                       className="chip on"
                       onClick={() => {
                         if (banks[0][1] < amt) return showToast("Bank balance kam hai");
-                        setUpiLiteBal((p) => p + amt);
-                        recordPayment("UPI Lite Top-up", amt, "Transfer", false, 0, false);
-                        showToast(`Added ${inr(amt)} to UPI Lite!`);
+                        setPinTask({
+                          label: "Add to UPI Lite",
+                          amount: amt,
+                          run: async (pin) => {
+                            const r = await apiCall("POST", "/api/upi-lite/topup", { amount: amt, pin, idempotencyKey: newKey() });
+                            if (r.ok) {
+                              await payDone("UPI Lite Topped Up", `${inr(amt)} added to UPI Lite`);
+                              showToast(`Added ${inr(amt)} to UPI Lite!`);
+                            }
+                            return r;
+                          },
+                        });
+                        setCurPin("");
+                        setNumModal("confirmpin");
                       }}
                     >
                       + Add ₹{amt}
@@ -1688,8 +1894,14 @@ export default function EkAppFullStack() {
                         className="chip on"
                         onClick={() => {
                           if (banks[0][1] < price) return showToast("Insufficient bank balance");
-                          recordPayment(`${title}`, price, "Investment", false, 0);
-                          showToast(`${title} Activated!`);
+                          act(async () => {
+                            const r = await apiCall("POST", "/api/offerings/buy", {
+                              category: subParam, title, idempotencyKey: newKey(),
+                            });
+                            if (!r.ok) return showToast(r.message);
+                            await payDone("Payment Successful", `${inr(r.data.transaction.amount)} debited for ${title}`);
+                            showToast(`${title} Activated!`);
+                          });
                         }}
                       >
                         {badge}
@@ -1734,12 +1946,12 @@ export default function EkAppFullStack() {
                       className="btn g"
                       onClick={() => {
                         if (banks[0][1] < price) return showToast("Balance kam hai");
-                        const cur = holdings[sym] || { qty: 0, avg: price };
-                        const nextH = { ...holdings, [sym]: { qty: cur.qty + 1, avg: price } };
-                        setHoldings(nextH);
-                        syncServer({ holdings: nextH });
-                        recordPayment(`Buy ${sym} × 1`, price, "Investment", false, 0);
-                        showToast(`Bought 1 ${sym} @ ${inr(price)}`);
+                        act(async () => {
+                          const r = await apiCall("POST", "/api/trades", { symbol: sym, side: "buy", qty: 1, idempotencyKey: newKey() });
+                          if (!r.ok) return showToast(r.message);
+                          await payDone("Order Executed", `Bought 1 ${sym} @ ${inr(r.data.order.price)}`);
+                          showToast(`Bought 1 ${sym} @ ${inr(r.data.order.price)}`);
+                        });
                       }}
                     >
                       Buy 1 Share
@@ -1748,12 +1960,12 @@ export default function EkAppFullStack() {
                       className="btn r"
                       onClick={() => {
                         if (!held) return showToast("Koi share nahi hai bechne ke liye");
-                        const cur = holdings[sym];
-                        const nextH = { ...holdings, [sym]: { qty: cur.qty - 1, avg: cur.avg } };
-                        setHoldings(nextH);
-                        syncServer({ holdings: nextH });
-                        recordPayment(`Sell ${sym} × 1`, price, "Income", true, 0);
-                        showToast(`Sold 1 ${sym} @ ${inr(price)}`);
+                        act(async () => {
+                          const r = await apiCall("POST", "/api/trades", { symbol: sym, side: "sell", qty: 1, idempotencyKey: newKey() });
+                          if (!r.ok) return showToast(r.message);
+                          await payDone("Order Executed", `Sold 1 ${sym} @ ${inr(r.data.order.price)}`);
+                          showToast(`Sold 1 ${sym} @ ${inr(r.data.order.price)}`);
+                        });
                       }}
                     >
                       Sell 1 Share
@@ -1808,8 +2020,8 @@ export default function EkAppFullStack() {
                   </>
                 ) : (
                   <div className="c p" style={{ textAlign: "center", padding: 20 }}>
-                    <b>Aarav Mehta</b>
-                    <p className="mu">aarav@ekapp • HDFC Bank ••4521</p>
+                    <b>{myName}</b>
+                    <p className="mu">{myUpi} • {banks[0][0]}</p>
                     <svg viewBox="0 0 120 120" width="170" height="170" style={{ margin: "14px auto", background: "#fff", padding: 10, borderRadius: 12, border: "1px solid var(--ln)" }}>
                       <rect x="10" y="10" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
                       <rect x="80" y="10" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
@@ -1921,14 +2133,31 @@ export default function EkAppFullStack() {
                     if (useLite) {
                       if (a > 500) return showToast("UPI Lite max limit is ₹500 per txn");
                       if (a > upiLiteBal) return showToast("UPI Lite balance kam hai");
-                      recordPayment(contacts[payToIdx][0] + (payNote ? ` (${payNote})` : ""), a, "Transfer", false, payBankIdx, true);
-                      setPayAmt("");
-                      setPayNote("");
-                      setNavHist(["home", "done"]);
+                      if (payBusy) return;
+                      setPayBusy(true);
+                      (async () => {
+                        const r = await apiCall("POST", "/api/payments", {
+                          amount: a,
+                          receiver: contacts[payToIdx][0].slice(0, 80),
+                          method: "lite",
+                          note: payNote ? payNote.slice(0, 100) : undefined,
+                          category: "Transfer",
+                          idempotencyKey: newKey(),
+                        });
+                        setPayBusy(false);
+                        if (!r.ok) return showToast(r.message);
+                        await loadAll();
+                        pushNotif("Paid via UPI Lite (No PIN)", `${inr(a)} debited from UPI Lite`);
+                        setPayAmt("");
+                        setPayNote("");
+                        setNavHist(["home", "done"]);
+                      })();
                       return;
                     }
                     if (a > banks[payBankIdx][1]) return showToast("Account me balance kam hai");
                     setPin("");
+                    setPinErr("");
+                    payKey.current = "";
                     setPinSheet(true);
                   }}
                 >
@@ -2076,11 +2305,14 @@ export default function EkAppFullStack() {
                         className="chip on"
                         onClick={() => {
                           if (banks[0][1] < min) return showToast("Balance kam hai");
-                          const nextSips = [...sips, { name, amt: min, day: "5 Nov", active: true }];
-                          setSips(nextSips);
-                          syncServer({ sips: nextSips });
-                          recordPayment(`SIP: ${name}`, min, "Investment", false, 0);
-                          showToast(`SIP started: ${inr(min)}/mo`);
+                          act(async () => {
+                            const r = await apiCall("POST", "/api/sips", {
+                              name, amount: min, dayOfMonth: 5, payFirstInstallment: true, idempotencyKey: newKey(),
+                            });
+                            if (!r.ok) return showToast(r.message);
+                            await payDone("SIP Started", `${inr(min)} debited for ${name}`);
+                            showToast(`SIP started: ${inr(min)}/mo`);
+                          });
                         }}
                       >
                         Start ₹{min}
@@ -2100,11 +2332,12 @@ export default function EkAppFullStack() {
                   className="btn"
                   onClick={() => {
                     if (banks[0][1] < 1000) return showToast("Balance kam hai");
-                    const nextG = +(goldGrams + 1000 / 7820).toFixed(4);
-                    setGoldGrams(nextG);
-                    syncServer({ goldGrams: nextG });
-                    recordPayment("24K Digital Gold", 1000, "Investment", false, 0);
-                    showToast("₹1,000 Digital Gold added to vault!");
+                    act(async () => {
+                      const r = await apiCall("POST", "/api/gold/buy", { amount: 1000, idempotencyKey: newKey() });
+                      if (!r.ok) return showToast(r.message);
+                      await payDone("Payment Successful", `${inr(1000)} debited for 24K Digital Gold`);
+                      showToast("₹1,000 Digital Gold added to vault!");
+                    });
                   }}
                 >
                   Buy ₹1,000 Instant Gold
@@ -2124,11 +2357,13 @@ export default function EkAppFullStack() {
                     className="btn"
                     onClick={() => {
                       if (banks[0][1] < 3240) return showToast("Balance kam hai");
-                      const nextE = emiPaid + 1;
-                      setEmiPaid(nextE);
-                      syncServer({ emiPaid: nextE });
-                      recordPayment("Bike Loan EMI", 3240, "Bills", false, 0);
-                      showToast("EMI ₹3,240 Paid!");
+                      if (loanId === null) return showToast("Loan details load nahi hui");
+                      act(async () => {
+                        const r = await apiCall("POST", "/api/loans/emi", { loanId, idempotencyKey: newKey() });
+                        if (!r.ok) return showToast(r.message);
+                        await payDone("Payment Successful", `${inr(r.data.transaction.amount)} debited for Bike Loan EMI`);
+                        showToast("EMI ₹3,240 Paid!");
+                      });
                     }}
                   >
                     Pay Next EMI (₹3,240)
@@ -2159,7 +2394,7 @@ export default function EkAppFullStack() {
                   <div className="chp"></div>
                   <div>
                     <div style={{ fontSize: 16, letterSpacing: 3 }}>•••• •••• •••• 4821</div>
-                    <small style={{ color: "rgba(255,255,255,.7)" }}>AARAV MEHTA • Limit ₹3,00,000</small>
+                    <small style={{ color: "rgba(255,255,255,.7)" }}>{myName.toUpperCase()} • Limit ₹3,00,000</small>
                   </div>
                 </div>
                 <div className="c p">
@@ -2170,10 +2405,12 @@ export default function EkAppFullStack() {
                     onClick={() => {
                       if (cardDue <= 0) return showToast("Bill already paid!");
                       if (banks[0][1] < cardDue) return showToast("Balance kam hai");
-                      recordPayment("HDFC Credit Card Bill", cardDue, "Bills", false, 0);
-                      setCardDue(0);
-                      syncServer({ cardDue: 0 });
-                      showToast("Credit Card Bill Cleared!");
+                      act(async () => {
+                        const r = await apiCall("POST", "/api/card/pay", { idempotencyKey: newKey() });
+                        if (!r.ok) return showToast(r.message);
+                        await payDone("Payment Successful", `${inr(r.data.transaction.amount)} debited for HDFC Credit Card Bill`);
+                        showToast("Credit Card Bill Cleared!");
+                      });
                     }}
                   >
                     {cardDue > 0 ? `Pay Credit Card Bill (${inr(cardDue)})` : "All Dues Cleared ✓"}
@@ -2225,7 +2462,7 @@ export default function EkAppFullStack() {
                 <div className="c p">
                   <b>Monthly Spend Limit</b>
                   {(() => {
-                    const spent = txns.filter((t) => !t.cr).reduce((a, b) => a + b.amt, 0);
+                    const spent = txns.filter((t) => !t.cr && t.cat !== "Self Transfer").reduce((a, b) => a + b.amt, 0);
                     const pct = Math.min(100, Math.round((spent / budget) * 100));
                     return (
                       <>
@@ -2239,8 +2476,13 @@ export default function EkAppFullStack() {
                           step="5000"
                           value={budget}
                           onChange={(e) => {
-                            setBudget(+e.target.value);
-                            syncServer({ budget: +e.target.value });
+                            const v = +e.target.value;
+                            setBudget(v);
+                            if (budgetTimer.current) clearTimeout(budgetTimer.current);
+                            budgetTimer.current = setTimeout(async () => {
+                              const r = await apiCall("PATCH", "/api/settings", { budget: v });
+                              if (!r.ok) showToast(r.message);
+                            }, 500);
                           }}
                         />
                       </>
@@ -2286,23 +2528,63 @@ export default function EkAppFullStack() {
                     const a = Number(selfAmt);
                     if (selfFrom === selfTo) return showToast("Select different banks");
                     if (!a || banks[selfFrom][1] < a) return showToast("Insufficient balance");
-                    const nextB: [string, number][] = banks.map((b, i) =>
-                      i === selfFrom ? [b[0], b[1] - a] : i === selfTo ? [b[0], b[1] + a] : b
-                    );
-                    setBanks(nextB);
-                    syncServer({ banks: nextB });
-                    pushNotif("Self Transfer Complete", `${inr(a)} moved from ${banks[selfFrom][0]} to ${banks[selfTo][0]}`);
-                    setNumModal(null);
+                    act(async () => {
+                      const r = await apiCall("POST", "/api/transfers/self", {
+                        fromAccountId: accountIds[selfFrom], toAccountId: accountIds[selfTo], amount: a, idempotencyKey: newKey(),
+                      });
+                      if (!r.ok) return showToast(r.message);
+                      await payDone("Self Transfer Complete", `${inr(a)} moved from ${banks[selfFrom][0]} to ${banks[selfTo][0]}`);
+                      setNumModal(null);
+                    });
                   }}
                 >
                   Transfer Now
                 </button>
                 <button className="btn o" onClick={() => setNumModal(null)}>Cancel</button>
               </>
+            ) : numModal === "confirmpin" && pinTask ? (
+              <>
+                <b style={{ fontSize: 16 }}>{pinTask.label}</b>
+                <h2 style={{ margin: "6px 0" }}>{inr(pinTask.amount)}</h2>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  placeholder="Enter 4-digit UPI PIN"
+                  maxLength={4}
+                  value={curPin}
+                  onChange={(e) => setCurPin(e.target.value.replace(/\D/g, ""))}
+                />
+                <button
+                  className="btn"
+                  onClick={() => {
+                    if (curPin.length !== 4) return showToast("Enter 4 digits");
+                    act(async () => {
+                      const r = await pinTask.run(curPin);
+                      setCurPin("");
+                      if (!r.ok) return showToast(r.message);
+                      setNumModal(null);
+                      setPinTask(null);
+                    });
+                  }}
+                >
+                  Confirm
+                </button>
+                <button className="btn o" onClick={() => { setNumModal(null); setPinTask(null); setCurPin(""); }}>Cancel</button>
+              </>
             ) : numModal === "changepin" ? (
               <>
-                <b style={{ fontSize: 16 }}>Set New 4-Digit UPI PIN</b>
+                <b style={{ fontSize: 16 }}>Change 4-Digit UPI PIN</b>
                 <input
+                  type="password"
+                  inputMode="numeric"
+                  placeholder="Current UPI PIN"
+                  maxLength={4}
+                  value={curPin}
+                  onChange={(e) => setCurPin(e.target.value.replace(/\D/g, ""))}
+                />
+                <input
+                  type="password"
+                  inputMode="numeric"
                   placeholder="Enter new 4-digit UPI PIN"
                   maxLength={4}
                   value={numInput}
@@ -2310,9 +2592,11 @@ export default function EkAppFullStack() {
                 />
                 <button
                   className="btn"
-                  onClick={() => {
-                    if (numInput.length !== 4) return showToast("Enter 4 digits");
-                    setUserPin(numInput);
+                  onClick={async () => {
+                    if (curPin.length !== 4 || numInput.length !== 4) return showToast("Enter 4 digits");
+                    const r = await apiCall("POST", "/api/auth/change-pin", { currentPin: curPin, newPin: numInput });
+                    if (!r.ok) return showToast(r.message);
+                    setCurPin("");
                     setNumModal(null);
                     showToast("UPI PIN updated successfully!");
                   }}
@@ -2361,13 +2645,13 @@ export default function EkAppFullStack() {
                 <i key={i} className={i < pin.length ? "f" : ""}></i>
               ))}
             </div>
-            <small>Enter 4-digit EkPay UPI PIN</small>
+            {pinErr ? <small style={{ color: "var(--rd)" }}>{pinErr}</small> : <small>{payBusy ? "Verifying…" : "Enter 4-digit EkPay UPI PIN"}</small>}
             <div className="kp">
               {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"].map((k) => (
                 <button key={k} onClick={() => handlePinKey(k)}>{k}</button>
               ))}
             </div>
-            <button className="btn o" onClick={() => setPinSheet(false)}>Cancel</button>
+            <button className="btn o" onClick={() => { setPinSheet(false); setPinErr(""); payKey.current = ""; }}>Cancel</button>
           </div>
         </div>
       )}
