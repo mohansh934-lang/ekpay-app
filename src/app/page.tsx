@@ -174,14 +174,14 @@ function BrandLogo({ brand, size = 42 }: { brand: string; size?: number }) {
   let bg = "#e81a6c", fg = "#fff", txt = brand.slice(0, 2).toUpperCase();
   if (b.includes("jio")) { bg = "#0a2885"; txt = "Jio"; }
   else if (b.includes("airtel")) { bg = "#e40000"; txt = "airtel"; }
-  else if (b.includes("vi")) { bg = "#ee2737"; fg = "#ffd100"; txt = "Vi"; }
+  else if (/\bvi\b/.test(b)) { bg = "#ee2737"; fg = "#ffd100"; txt = "Vi"; }
   else if (b.includes("bsnl")) { bg = "#005baa"; txt = "BSNL"; }
   else if (b.includes("tata")) { bg = "#6a1b9a"; txt = "TP"; }
   else if (b.includes("dish")) { bg = "#f57c00"; txt = "d2h"; }
   else if (b.includes("sun")) { bg = "#d32f2f"; txt = "SUN"; }
   else if (b.includes("indane")) { bg = "#f37021"; txt = "OIL"; }
-  else if (b.includes("hp")) { bg = "#004b87"; txt = "HP"; }
-  else if (b.includes("bharat")) { bg = "#fdd835"; fg = "#0d47a1"; txt = "BG"; }
+  else if (b.startsWith("hp gas")) { bg = "#004b87"; txt = "HP"; }
+  else if (b.startsWith("bharat gas")) { bg = "#fdd835"; fg = "#0d47a1"; txt = "BG"; }
   else if (b.includes("irctc")) { bg = "#003366"; txt = "🚆"; }
 
   return (
