@@ -2,6 +2,7 @@ import { many, one } from "./db";
 import { rupees } from "./money";
 import { listTxns } from "./ledger";
 import type { SessionUser } from "./auth";
+import { getPrefs } from "./settings";
 
 /** Ek call me poora dashboard snapshot (amounts rupees me, internally paise). */
 export function getState(user: SessionUser) {
@@ -23,6 +24,7 @@ export function getState(user: SessionUser) {
     goldGrams: w.gold / 1_000_000,
     cardDue: rupees(w.due),
     budget: rupees(w.budget),
+    settings: getPrefs(uid),
     loans: many<{ id: number; name: string; emi_paise: number; total_emis: number; paid_emis: number }>(
       "SELECT id, name, emi_paise, total_emis, paid_emis FROM loans WHERE user_id = ?", uid
     ).map((l) => ({ id: l.id, name: l.name, emi: rupees(l.emi_paise), totalEmis: l.total_emis, paidEmis: l.paid_emis })),

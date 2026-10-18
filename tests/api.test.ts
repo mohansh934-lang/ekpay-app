@@ -428,6 +428,74 @@ describe("transactions, SIPs, settings", () => {
   });
 });
 
+describe("user settings", () => {
+  const patch = (cookie: string, body: unknown) => call("settings", "PATCH", "/api/settings", { cookie, body });
+
+  test("new user gets default settings in state and GET /api/settings", async () => {
+    const u = await newUser();
+    const want = { theme: "light", soundOn: true, hideBalance: false, intlUpi: false, payAlerts: true };
+    assert.deepEqual((await stateOf(u.cookie)).settings, want);
+    const g = await call("settings", "GET", "/api/settings", { cookie: u.cookie });
+    assert.equal(g.status, 200);
+    assert.deepEqual(g.data.settings, want);
+  });
+
+  test("partial update persists and leaves other fields alone", async () => {
+    const u = await newUser();
+    const r = await patch(u.cookie, { theme: "dark", payAlerts: false });
+    assert.equal(r.status, 200);
+    assert.equal(r.data.settings.theme, "dark");
+    const r2 = await patch(u.cookie, { hideBalance: true });
+    assert.equal(r2.status, 200);
+    const s = (await stateOf(u.cookie)).settings;
+    assert.deepEqual(s, { theme: "dark", soundOn: true, hideBalance: true, intlUpi: false, payAlerts: false });
+  });
+
+  test("validation: bad theme, non-boolean, empty body, auth", async () => {
+    const u = await newUser();
+    assert.equal((await patch(u.cookie, { theme: "neon" })).status, 400);
+    assert.equal((await patch(u.cookie, { theme: 1 })).status, 400);
+    assert.equal((await patch(u.cookie, { soundOn: "yes" })).status, 400);
+    assert.equal((await patch(u.cookie, { payAlerts: 1 })).status, 400);
+    assert.equal((await patch(u.cookie, {})).status, 400);
+    assert.equal((await patch(u.cookie, { unknownField: true })).status, 400);
+    const anon = await call("settings", "PATCH", "/api/settings", { body: { theme: "dark" } });
+    assert.equal(anon.status, 401);
+    assert.equal((await call("settings", "GET", "/api/settings")).status, 401);
+    assert.equal((await stateOf(u.cookie)).settings.theme, "light"); // kuch bhi save nahi hua
+  });
+
+  test("payments without bankAccountId always use the primary account", async () => {
+    const u = await newUser();
+    await patch(u.cookie, { theme: "dark" });
+    assert.equal((await pay(u.cookie, { amount: 100 })).status, 201);
+    const st = await stateOf(u.cookie);
+    assert.equal(st.banks[0].balance, 48130); // HDFC (primary)
+    assert.equal(st.banks[1].balance, 12540); // SBI untouched
+  });
+
+  test("budget + settings in one request are atomic", async () => {
+    const u = await newUser();
+    const before = (await stateOf(u.cookie)).budget;
+    const bad = await patch(u.cookie, { budget: 40000, theme: "neon" });
+    assert.equal(bad.status, 400);
+    assert.equal((await stateOf(u.cookie)).budget, before); // budget bhi nahi badla
+    const ok = await patch(u.cookie, { budget: 40000, theme: "system" });
+    assert.equal(ok.status, 200);
+    const s = await stateOf(u.cookie);
+    assert.equal(s.budget, 40000);
+    assert.equal(s.settings.theme, "system");
+  });
+
+  test("settings are per-user", async () => {
+    const a = await newUser();
+    const b = await newUser();
+    await patch(a.cookie, { theme: "dark", intlUpi: true });
+    assert.equal((await stateOf(b.cookie)).settings.theme, "light");
+    assert.equal((await stateOf(b.cookie)).settings.intlUpi, false);
+  });
+});
+
 describe("deposit, card bill, self transfer, offerings", () => {
   test("demo deposit credits account; capped; rate limited", async () => {
     const u = await newUser();

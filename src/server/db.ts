@@ -126,7 +126,25 @@ ALTER TABLE wallets RENAME COLUMN gold_mg TO gold_ug;
 UPDATE wallets SET gold_ug = gold_ug * 1000;
 `;
 
-export const MIGRATIONS: string[] = [SCHEMA_V1, SCHEMA_V2];
+/**
+ * App settings (theme, sound, privacy...) server pe, taaki har device pe same rahein.
+ * NOTE: default_account_id column ab use nahi hoti ("default bank" feature hata diya gaya). Migration immutable hai
+ * aur SQLite foreign-key wali column drop nahi karne deta, isliye column bas pada rehta hai.
+ */
+const SCHEMA_V3 = `
+CREATE TABLE user_settings (
+  user_id            INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  theme              TEXT    NOT NULL DEFAULT 'light' CHECK (theme IN ('light','dark','system')),
+  sound_on           INTEGER NOT NULL DEFAULT 1 CHECK (sound_on IN (0,1)),
+  hide_balance       INTEGER NOT NULL DEFAULT 0 CHECK (hide_balance IN (0,1)),
+  intl_upi           INTEGER NOT NULL DEFAULT 0 CHECK (intl_upi IN (0,1)),
+  pay_alerts         INTEGER NOT NULL DEFAULT 1 CHECK (pay_alerts IN (0,1)),
+  default_account_id INTEGER REFERENCES bank_accounts(id) ON DELETE SET NULL,
+  updated_at         INTEGER NOT NULL
+);
+`;
+
+export const MIGRATIONS: string[] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3];
 
 function open(): DB {
   const proc = process as unknown as { getBuiltinModule?: (id: string) => unknown };
@@ -139,7 +157,12 @@ function open(): DB {
   fs.mkdirSync(path.dirname(config.dbPath), { recursive: true });
   const db = new mod.DatabaseSync(config.dbPath);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; PRAGMA synchronous = NORMAL;");
+  migrate(db);
+  return db;
+}
 
+/** Jo migrations abhi tak nahi chali (PRAGMA user_version se pata chalta hai) wahi chalti hain. Dobara chalane pe safe. */
+function migrate(db: DB) {
   const current = Number((db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version);
   for (let v = current; v < MIGRATIONS.length; v++) {
     db.exec("BEGIN");
@@ -152,12 +175,23 @@ function open(): DB {
       throw e;
     }
   }
-  return db;
 }
 
-const g = globalThis as unknown as { __ekDb?: DB };
-/** Lazy singleton (dev hot-reload me bhi ek hi connection). */
-export const getDb = (): DB => (g.__ekDb ??= open());
+const g = globalThis as unknown as { __ekDb?: DB; __ekDbSchema?: number };
+/**
+ * Lazy singleton (dev hot-reload me bhi ek hi connection).
+ * Dev me code reload hone par connection purana rehta hai: agar tab tak naya migration add ho gaya ho
+ * to use isi connection par chala do (warna "no such table" jaise errors aate hain jab tak server restart na ho).
+ */
+export const getDb = (): DB => {
+  if (!g.__ekDb) {
+    g.__ekDb = open();
+  } else if (g.__ekDbSchema !== MIGRATIONS.length) {
+    migrate(g.__ekDb);
+  }
+  g.__ekDbSchema = MIGRATIONS.length;
+  return g.__ekDb;
+};
 
 /**
  * Atomic transaction. fn SYNC honi chahiye (await mat karna andar), tabhi BEGIN IMMEDIATE

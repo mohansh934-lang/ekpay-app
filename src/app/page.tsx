@@ -459,6 +459,14 @@ const SCREEN_TITLES: Record<string, string> = {
 // The 4 Root Bottom Tabs where Back Button should NOT appear
 const ROOT_TABS = new Set(["home", "txns", "invest", "more"]);
 
+type ThemePref = "light" | "dark" | "system";
+const PREFS_KEY = "ek_prefs";
+
+/** Server ko bheja jaane wala settings payload (PATCH /api/settings). Key order fixed => compare reliable. */
+const settingsPayload = (theme: ThemePref, soundOn: boolean, hideBalance: boolean, intlUpi: boolean, payAlerts: boolean) => ({
+  theme, soundOn, hideBalance, intlUpi, payAlerts,
+});
+
 export default function EkAppFullStack() {
   const [showSplash, setShowSplash] = useState(true);
   const [splashFade, setSplashFade] = useState(false);
@@ -468,6 +476,13 @@ export default function EkAppFullStack() {
   const [soundOn, setSoundOn] = useState(true);
   const [intlUpi, setIntlUpi] = useState(false);
   const [upiLiteBal, setUpiLiteBal] = useState(420);
+
+  // ---- Settings (is browser me save hote hain: localStorage "ek_prefs") ----
+  const [theme, setTheme] = useState<ThemePref>("light");
+  const [payAlerts, setPayAlerts] = useState(true);
+  const [prefsReady, setPrefsReady] = useState(false);
+  // Server pe jo settings last save/load hui (JSON). null = is login me abhi server se load nahi hui.
+  const settingsSaved = useRef<string | null>(null);
 
   // ---- Auth / server connection ----
   const [authState, setAuthState] = useState<"loading" | "out" | "in">("loading");
@@ -598,6 +613,47 @@ export default function EkAppFullStack() {
   const [loanR] = useState(10.5);
   const [splitAmt, setSplitAmt] = useState(1200);
 
+  // Saved settings load karo (sirf ek baar)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PREFS_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.theme === "light" || p.theme === "dark" || p.theme === "system") setTheme(p.theme);
+        if (typeof p.soundOn === "boolean") setSoundOn(p.soundOn);
+        if (typeof p.hideBal === "boolean") setHideBal(p.hideBal);
+        if (typeof p.intlUpi === "boolean") setIntlUpi(p.intlUpi);
+        if (typeof p.payAlerts === "boolean") setPayAlerts(p.payAlerts);
+      }
+    } catch {
+      /* corrupt ya blocked storage: defaults pe chalo */
+    }
+    setPrefsReady(true);
+  }, []);
+
+  // Settings badalte hi save karo (load hone ke baad hi, warna defaults purani settings ko overwrite kar dete)
+  useEffect(() => {
+    if (!prefsReady) return;
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ theme, soundOn, hideBal, intlUpi, payAlerts }));
+    } catch {
+      /* storage full/blocked: ignore */
+    }
+  }, [prefsReady, theme, soundOn, hideBal, intlUpi, payAlerts]);
+
+  // Theme lagao. "System" me phone ki dark/light setting follow hoti hai.
+  useEffect(() => {
+    const root = document.documentElement;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      root.dataset.theme = theme === "system" ? (mq.matches ? "dark" : "light") : theme;
+    };
+    apply();
+    if (theme !== "system") return;
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [theme]);
+
   useEffect(() => {
     const t1 = setTimeout(() => setSplashFade(true), 1250);
     const t2 = setTimeout(() => setShowSplash(false), 1700);
@@ -630,6 +686,7 @@ export default function EkAppFullStack() {
   const pushNotif = (title: string, body: string) => {
     setNotifs((p) => [{ title, body, time: "Just now" }, ...p]);
     setUnread((u) => u + 1);
+    if (!payAlerts) return; // alerts OFF: inbox me aayega, banner/sound nahi
     setBanner({ title, body });
     tone(988, 0.14);
     setTimeout(() => setBanner(null), 3800);
@@ -691,6 +748,7 @@ export default function EkAppFullStack() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401 && data?.error?.code === "UNAUTHORIZED") {
+        settingsSaved.current = null;
         setAuthState("out");
         setUnlocked(false);
       }
@@ -710,6 +768,7 @@ export default function EkAppFullStack() {
   const loadAll = async () => {
     const st = await apiCall("GET", "/api/state");
     if (!st.ok) {
+      settingsSaved.current = null;
       setAuthState("out");
       return false;
     }
@@ -717,6 +776,19 @@ export default function EkAppFullStack() {
     setMe(d.user);
     setAccountIds(d.banks.map((b: any) => b.id));
     setBanks(d.banks.map((b: any) => [b.label, b.balance] as [string, number]));
+    setPayBankIdx((i) => (i < d.banks.length ? i : 0));
+    // Server wali settings (sirf login ke baad pehli load me; baad ki loads user ke taaza badlav ko overwrite na karein)
+    if (d.settings && settingsSaved.current === null) {
+      const sv = d.settings;
+      setTheme(sv.theme);
+      setSoundOn(sv.soundOn);
+      setHideBal(sv.hideBalance);
+      setIntlUpi(sv.intlUpi);
+      setPayAlerts(sv.payAlerts);
+      settingsSaved.current = JSON.stringify(
+        settingsPayload(sv.theme, sv.soundOn, sv.hideBalance, sv.intlUpi, sv.payAlerts)
+      );
+    }
     setHoldings(Object.fromEntries(d.holdings.map((h: any) => [h.symbol, { qty: h.qty, avg: h.avgPrice }])));
     setSips(d.sips.map((x: any) => ({ name: x.name, amt: x.amount, day: `${x.dayOfMonth}th`, active: true })));
     setGoldGrams(d.goldGrams);
@@ -738,6 +810,21 @@ export default function EkAppFullStack() {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Settings badalte hi (thodi der ruk kar) server pe save karo
+  useEffect(() => {
+    if (authState !== "in" || settingsSaved.current === null) return;
+    const payload = settingsPayload(theme, soundOn, hideBal, intlUpi, payAlerts);
+    const sig = JSON.stringify(payload);
+    if (sig === settingsSaved.current) return;
+    const t = setTimeout(async () => {
+      const r = await apiCall("PATCH", "/api/settings", payload);
+      if (r.ok) settingsSaved.current = sig;
+      else showToast("Settings server pe save nahi ho payi");
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authState, theme, soundOn, hideBal, intlUpi, payAlerts]);
 
   const submitAuth = async () => {
     if (authBusy) return;
@@ -890,6 +977,17 @@ export default function EkAppFullStack() {
   });
   const totalSpent = Object.values(catSpends).reduce((a, b) => a + b, 0) || 1;
   const totalReceived = txns.filter((t) => t.cr && t.cat !== "Self Transfer").reduce((a, b) => a + b.amt, 0);
+
+  const settingToggle = (icon: string, title: string, sub: string, on: boolean, onToggle: () => void) => (
+    <button className="row" onClick={onToggle}>
+      <span className="it"><Icon n={icon} /></span>
+      <span className="m">
+        <b>{title}</b>
+        <small>{sub}</small>
+      </span>
+      <b className={on ? "cr" : "mu"}>{on ? "ON" : "OFF"}</b>
+    </button>
+  );
 
   const [baseView, subParam] = view.split(":");
   const isRootTab = ROOT_TABS.has(view);
@@ -1048,15 +1146,6 @@ export default function EkAppFullStack() {
                 <button className="ib" onClick={() => go("notif")}>
                   <Icon n="bell" s={19} />
                   {unread > 0 && <b>{unread}</b>}
-                </button>
-                <button
-                  className="ib"
-                  onClick={() => {
-                    const d = document.documentElement;
-                    d.dataset.theme = d.dataset.theme === "dark" ? "light" : "dark";
-                  }}
-                >
-                  <Icon n="moon" s={19} />
                 </button>
               </>
             ) : (
@@ -1288,39 +1377,60 @@ export default function EkAppFullStack() {
               </>
             )}
 
-            {/* ================= DEDICATED SETTINGS TAB (BOTTOM NAV 5TH TAB - COMPLETELY DIFFERENT FROM PROFILE!) ================= */}
+            {/* ================= SETTINGS TAB (bottom nav) ================= */}
             {baseView === "more" && (
               <>
-                <h3>UPI Security & Controls</h3>
+                <div className="c p">
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span className="av" style={{ width: 48, height: 48, background: "#fce7f0", color: "#9d1048", fontSize: 17 }}>
+                      {initials}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <b>{myName}</b>
+                      <small style={{ display: "block" }}>{myUpi} • {myPhone}</small>
+                    </div>
+                    <button
+                      className="chip"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(myUpi);
+                          showToast("UPI ID copied");
+                        } catch {
+                          showToast("Copy nahi ho paya");
+                        }
+                      }}
+                    >
+                      Copy ID
+                    </button>
+                  </div>
+                  <button className="btn o" style={{ marginTop: 10 }} onClick={() => go("profile")}>
+                    View Profile & My QR
+                  </button>
+                </div>
+
+                <h3>Security & Privacy</h3>
                 <div className="c">
                   <button className="row" onClick={() => { setNumInput(""); setCurPin(""); setNumModal("changepin"); }}>
                     <span className="it"><Icon n="lock" /></span>
                     <span className="m">
-                      <b>Change 4-Digit UPI PIN</b>
-                      <small>Update UPI PIN for HDFC, SBI & ICICI</small>
+                      <b>Change UPI PIN</b>
+                      <small>Update your UPI PIN</small>
                     </span>
                     <span className="mu">Reset →</span>
                   </button>
-
-                  <button
-                    className="row"
-                    onClick={() => {
-                      setIntlUpi(!intlUpi);
-                      showToast("International UPI " + (!intlUpi ? "Enabled" : "Disabled"));
-                    }}
-                  >
-                    <span className="it"><Icon n="shield" /></span>
-                    <span className="m">
-                      <b>International UPI Roaming</b>
-                      <small>Pay merchants in UAE, Singapore, France</small>
-                    </span>
-                    <b className={intlUpi ? "cr" : "mu"}>{intlUpi ? "ON" : "OFF"}</b>
-                  </button>
-
+                  {settingToggle("eye", "Balance Privacy Mode", "Mask bank balances on screen", hideBal, () => {
+                    setHideBal(!hideBal);
+                    showToast("Privacy Mode " + (!hideBal ? "Enabled" : "Disabled"));
+                  })}
+                  {settingToggle("shield", "International UPI", "Pay merchants abroad (UAE, Singapore, France)", intlUpi, () => {
+                    setIntlUpi(!intlUpi);
+                    showToast("International UPI " + (!intlUpi ? "Enabled" : "Disabled"));
+                  })}
                   <button
                     className="row"
                     onClick={async () => {
                       await apiCall("POST", "/api/auth/logout");
+                      settingsSaved.current = null;
                       setAuthState("out");
                       setUnlocked(false);
                       setMe(null);
@@ -1336,64 +1446,57 @@ export default function EkAppFullStack() {
                   </button>
                 </div>
 
-                <h3>App Appearance & Sound</h3>
+                <h3>Notifications</h3>
                 <div className="c">
-                  <button
-                    className="row"
-                    onClick={() => {
-                      setSoundOn(!soundOn);
-                      showToast("Audio Beep " + (!soundOn ? "ON" : "OFF"));
-                    }}
-                  >
-                    <span className="it"><Icon n="vol" /></span>
+                  {settingToggle("bell", "Payment Alerts", "Banner & sound when a payment happens", payAlerts, () => {
+                    setPayAlerts(!payAlerts);
+                    showToast("Payment alerts " + (!payAlerts ? "ON" : "OFF"));
+                  })}
+                  <button className="row" onClick={() => go("notif")}>
+                    <span className="it"><Icon n="bell" /></span>
                     <span className="m">
-                      <b>Payment Sound & Haptic Feedback</b>
-                      <small>Play sonic chime on UPI transfers</small>
-                    </span>
-                    <b className={soundOn ? "cr" : "mu"}>{soundOn ? "ON" : "OFF"}</b>
-                  </button>
-
-                  <button
-                    className="row"
-                    onClick={() => {
-                      const d = document.documentElement;
-                      d.dataset.theme = d.dataset.theme === "dark" ? "light" : "dark";
-                    }}
-                  >
-                    <span className="it"><Icon n="moon" /></span>
-                    <span className="m">
-                      <b>Dark / Light Theme</b>
-                      <small>Switch app color scheme</small>
-                    </span>
-                    <span className="mu">Switch</span>
-                  </button>
-
-                  <button
-                    className="row"
-                    onClick={() => {
-                      setHideBal(!hideBal);
-                      showToast("Privacy Mode " + (!hideBal ? "Enabled" : "Disabled"));
-                    }}
-                  >
-                    <span className="it"><Icon n="eye" /></span>
-                    <span className="m">
-                      <b>Balance Privacy Mode</b>
-                      <small>Mask bank balances on home screen</small>
-                    </span>
-                    <b className={hideBal ? "cr" : "mu"}>{hideBal ? "ON" : "OFF"}</b>
-                  </button>
-                </div>
-
-                <h3>Developer & Data Controls</h3>
-                <div className="c">
-                  <button className="row" onClick={() => go("profile")}>
-                    <span className="it"><Icon n="user" /></span>
-                    <span className="m">
-                      <b>View My Profile & UPI QR</b>
-                      <small>{myUpi} • Linked Banks</small>
+                      <b>Notification Inbox</b>
+                      <small>See all your alerts</small>
                     </span>
                     <span className="mu">Open →</span>
                   </button>
+                </div>
+
+                <h3>Appearance & Sound</h3>
+                <div className="c p">
+                  <b>App Theme</b>
+                  <small style={{ display: "block" }}>Light, Dark, ya phone ki setting follow karo</small>
+                  <div className="chips">
+                    {(["light", "dark", "system"] as const).map((t) => (
+                      <button
+                        key={t}
+                        className={`chip ${theme === t ? "on" : ""}`}
+                        onClick={() => {
+                          setTheme(t);
+                          showToast("Theme: " + (t === "light" ? "Light" : t === "dark" ? "Dark" : "System"));
+                        }}
+                      >
+                        {t === "light" ? "☀️ Light" : t === "dark" ? "🌙 Dark" : "📱 System"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="c">
+                  {settingToggle("vol", "Sound & Tap Feedback", "Play chime on taps and UPI transfers", soundOn, () => {
+                    setSoundOn(!soundOn);
+                    showToast("Sound " + (!soundOn ? "ON" : "OFF"));
+                  })}
+                </div>
+
+                <h3>About</h3>
+                <div className="c">
+                  <div className="row">
+                    <span className="it"><Icon n="gear" /></span>
+                    <span className="m">
+                      <b>Ek App v0.1.0</b>
+                      <small>Demo simulator: koi real bank ya paisa involved nahi hai</small>
+                    </span>
+                  </div>
                 </div>
               </>
             )}

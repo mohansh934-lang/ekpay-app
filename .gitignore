@@ -42,3 +42,6 @@ next-env.d.ts
 
 # local database (SQLite)
 /data/*.sqlite*
+
+# Local backup files
+*.bak
