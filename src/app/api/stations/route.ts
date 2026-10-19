@@ -1,9 +1,6 @@
-import { NextResponse } from "next/server";
+import { api, json, rateLimit } from "../../../server/http";
+import { requireUser } from "../../../server/auth";
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || "923a2f7d8amshfc3a976d1d4d12ap1d98dajsn3ca7a77d142c";
-const RAPIDAPI_HOST = process.env.RAPIDAPI_IRCTC_HOST || "irctc1.p.rapidapi.com";
-
-// Comprehensive Indian Railways Station Directory (Code, Name, State/Zone)
 const ALL_STATIONS: [string, string, string][] = [
   ["BPL", "Bhopal Jn", "Madhya Pradesh"],
   ["RKMP", "Rani Kamalapati (Habibganj)", "Madhya Pradesh"],
@@ -64,14 +61,16 @@ const ALL_STATIONS: [string, string, string][] = [
   ["DDN", "Dehradun", "Uttarakhand"],
   ["GHY", "Guwahati", "Assam"],
   ["ERS", "Ernakulam Jn (Kochi)", "Kerala"],
-  ["TVC", "Thiruvananthapuram Central", "Kerala"]
+  ["TVC", "Thiruvananthapuram Central", "Kerala"],
 ];
 
-export async function GET(req: Request) {
+export const GET = api(async (req) => {
+  const user = requireUser(req);
+  rateLimit(`stations:${user.id}`, 40, 60 * 1000);
+
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") || "").trim().toLowerCase();
 
-  // 1. Instant Local Match (by Station Code, City Name, or State)
   const localMatches = ALL_STATIONS.filter(
     ([code, name, state]) =>
       !q ||
@@ -80,33 +79,37 @@ export async function GET(req: Request) {
       state.toLowerCase().includes(q)
   )
     .slice(0, 10)
-    .map(([code, name, state]) => ({ code, name, state }));
+    .map(([code, name, state]) => ({ code, name, state, source: "directory" }));
 
-  // 2. If user typed 2+ chars and few local matches, also query RapidAPI searchStation
-  if (q.length >= 2 && localMatches.length < 3) {
+  const rapidKey = process.env.RAPIDAPI_KEY;
+  const rapidHost = process.env.RAPIDAPI_IRCTC_HOST || "irctc1.p.rapidapi.com";
+
+  if (rapidKey && q.length >= 2 && localMatches.length < 3) {
     try {
       const res = await fetch(
-        `https://${RAPIDAPI_HOST}/api/v1/searchStation?query=${encodeURIComponent(q.toUpperCase())}`,
+        `https://${rapidHost}/api/v1/searchStation?query=${encodeURIComponent(q.toUpperCase())}`,
         {
           headers: {
-            "x-rapidapi-key": RAPIDAPI_KEY,
-            "x-rapidapi-host": RAPIDAPI_HOST,
+            "x-rapidapi-key": rapidKey,
+            "x-rapidapi-host": rapidHost,
           },
           cache: "no-store",
         }
       );
-      const raw = await res.json();
+      const raw = (await res.json()) as { data?: Array<Record<string, unknown>> };
       if (Array.isArray(raw?.data)) {
         for (const s of raw.data.slice(0, 6)) {
           const code = String(s.code || s.station_code || "").toUpperCase();
           const name = String(s.name || s.station_name || "");
           if (code && name && !localMatches.some((m) => m.code === code)) {
-            localMatches.push({ code, name, state: "Indian Railways" });
+            localMatches.push({ code, name, state: "Indian Railways", source: "rapidapi" });
           }
         }
       }
-    } catch {}
+    } catch {
+      // Ignore upstream timeout and return local directory matches
+    }
   }
 
-  return NextResponse.json({ success: true, stations: localMatches });
-}
+  return json({ success: true, stations: localMatches });
+});

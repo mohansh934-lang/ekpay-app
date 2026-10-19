@@ -1,86 +1,75 @@
-import { NextResponse } from "next/server";
+import { api, json, rateLimit } from "../../../server/http";
+import { requireUser } from "../../../server/auth";
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || "923a2f7d8amshfc3a976d1d4d12ap1d98dajsn3ca7a77d142c";
+export const GET = api(async (req) => {
+  const user = requireUser(req);
+  rateLimit(`trains:${user.id}`, 15, 60 * 1000);
 
-// Known RapidAPI IRCTC Hosts to try automatically
-const CANDIDATE_ENDPOINTS = [
-  {
-    host: process.env.RAPIDAPI_IRCTC_HOST || "irctc1.p.rapidapi.com",
-    url: (from: string, to: string, date: string) =>
-      `https://${process.env.RAPIDAPI_IRCTC_HOST || "irctc1.p.rapidapi.com"}/api/v3/trainBetweenStations?fromStationCode=${from}&toStationCode=${to}&dateOfJourney=${date}`,
-  },
-  {
-    host: "irctc-api2.p.rapidapi.com",
-    url: (from: string, to: string, date: string) =>
-      `https://irctc-api2.p.rapidapi.com/trainBetweenStations?fromStationCode=${from}&toStationCode=${to}&dateOfJourney=${date}`,
-  },
-];
-
-export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const from = (searchParams.get("from") || "BPL").toUpperCase();
-  const to = (searchParams.get("to") || "NGP").toUpperCase();
-  const date = searchParams.get("date") || "2026-10-24";
+  const from = (searchParams.get("from") || "BPL").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 6);
+  const to = (searchParams.get("to") || "NGP").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 6);
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const date = searchParams.get("date") || todayIso;
 
-  let apiDebug = "";
+  const rapidKey = process.env.RAPIDAPI_KEY;
+  const rapidHost = process.env.RAPIDAPI_IRCTC_HOST || "irctc1.p.rapidapi.com";
 
-  // Try Live RapidAPI IRCTC Endpoints
-  for (const ep of CANDIDATE_ENDPOINTS) {
+  if (rapidKey) {
     try {
-      const res = await fetch(ep.url(from, to, date), {
+      const url = `https://${rapidHost}/api/v3/trainBetweenStations?fromStationCode=${from}&toStationCode=${to}&dateOfJourney=${date}`;
+      const res = await fetch(url, {
         method: "GET",
         headers: {
-          "x-rapidapi-key": RAPIDAPI_KEY,
-          "x-rapidapi-host": ep.host,
+          "x-rapidapi-key": rapidKey,
+          "x-rapidapi-host": rapidHost,
         },
         cache: "no-store",
       });
 
-      const raw = await res.json();
-      const list = Array.isArray(raw?.data)
-        ? raw.data
-        : Array.isArray(raw?.data?.train_base)
-        ? raw.data.train_base
-        : Array.isArray(raw)
-        ? raw
+      const raw = (await res.json()) as Record<string, unknown>;
+      const dataObj = raw?.data as Record<string, unknown> | unknown[] | undefined;
+      const list = Array.isArray(dataObj)
+        ? dataObj
+        : Array.isArray((dataObj as Record<string, unknown>)?.train_base)
+        ? ((dataObj as Record<string, unknown>).train_base as unknown[])
         : null;
 
       if (res.ok && list && list.length > 0) {
-        const trains = list.slice(0, 8).map((t: any, idx: number) => {
-          const base = 260 + ((Number(t.train_number || t.trainNo || 12000) + idx * 37) % 240);
+        const trains = list.slice(0, 8).map((item, idx) => {
+          const t = item as Record<string, unknown>;
+          const trainNo = String(t.train_number || t.trainNo || "12622");
+          const baseEst = 260 + ((Number(trainNo) + idx * 37) % 240);
           return {
-            no: String(t.train_number || t.trainNo || "12622"),
-            name: String(t.train_name || t.trainName || "Superfast Express"),
+            no: trainNo,
+            name: String(t.train_name || t.trainName || "Express"),
             dep: String(t.from_std || t.departureTime || "06:45"),
             arr: String(t.to_sta || t.arrivalTime || "14:20"),
             dur: String(t.duration || "7h 35m"),
-            sl: base,
-            a3: Math.round(base * 2.55),
-            a2: Math.round(base * 3.65),
-            avl: idx % 3 === 0 ? `AVL ${18 + idx * 7}` : idx % 3 === 1 ? `AVL ${42 + idx * 3}` : `RAC ${9 + idx}`,
-            source: "RapidAPI Live",
+            sl: Number(t.sl_fare) || baseEst,
+            a3: Number(t.a3_fare) || Math.round(baseEst * 2.55),
+            a2: Number(t.a2_fare) || Math.round(baseEst * 3.65),
+            avl: String(t.availability || "Check Quota (Est.)"),
+            isEstimatedFare: !t.sl_fare,
           };
         });
 
-        return NextResponse.json({
+        return json({
           success: true,
-          source: `RapidAPI Live (${ep.host})`,
+          isLive: true,
+          source: "RapidAPI Train Schedule (Est. Class Fares)",
           from,
           to,
           date,
           trains,
         });
-      } else {
-        apiDebug = raw?.message || `Status ${res.status}`;
       }
-    } catch (e: any) {
-      apiDebug = e?.message || "Network error";
+    } catch {
+      // Fall through to clearly-labeled offline simulator schedule
     }
   }
 
-  // Intelligent Route-Aware Fallback if RapidAPI key needs plan subscription or hits rate limit
   const seed = (from.charCodeAt(0) * 31 + to.charCodeAt(0) * 17) % 90;
-  const fallbackTrains = [
+  const simulatedTrains = [
     {
       no: String(12600 + seed),
       name: `${from}-${to} Superfast Exp`,
@@ -90,7 +79,7 @@ export async function GET(req: Request) {
       sl: 295 + seed,
       a3: 760 + seed * 2,
       a2: 1080 + seed * 3,
-      avl: "AVL 46",
+      avl: "SIM-AVL 46",
     },
     {
       no: "20171",
@@ -101,7 +90,7 @@ export async function GET(req: Request) {
       sl: 840 + seed,
       a3: 1420 + seed * 2,
       a2: 2490 + seed * 3,
-      avl: "AVL 22",
+      avl: "SIM-AVL 22",
     },
     {
       no: String(12510 + (seed % 40)),
@@ -112,38 +101,17 @@ export async function GET(req: Request) {
       sl: 340 + seed,
       a3: 890 + seed * 2,
       a2: 1275 + seed * 3,
-      avl: "AVL 31",
-    },
-    {
-      no: String(19300 + (seed % 50)),
-      name: "Dakshin Express",
-      dep: "16:05",
-      arr: "23:45",
-      dur: "7h 40m",
-      sl: 280 + seed,
-      a3: 730 + seed * 2,
-      a2: 1030 + seed * 3,
-      avl: "RAC 12",
-    },
-    {
-      no: String(12960 + (seed % 30)),
-      name: "Rajdhani / Duronto Special",
-      dep: "21:10",
-      arr: "04:55",
-      dur: "7h 45m",
-      sl: 410 + seed,
-      a3: 1095 + seed * 2,
-      a2: 1540 + seed * 3,
-      avl: "AVL 64",
+      avl: "SIM-AVL 31",
     },
   ];
 
-  return NextResponse.json({
+  return json({
     success: true,
-    source: apiDebug ? `Server API (${apiDebug})` : "Server API",
+    isLive: false,
+    source: "Offline Simulator Schedule (Est. Fares)",
     from,
     to,
     date,
-    trains: fallbackTrains,
+    trains: simulatedTrains,
   });
-}
+});

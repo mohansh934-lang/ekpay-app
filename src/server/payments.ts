@@ -3,7 +3,7 @@ import { ApiError } from "./errors";
 import { transaction } from "./db";
 import { idemKey, optStr, posInt, str } from "./http";
 import { toPaise, rupees } from "./money";
-import { verifyPin } from "./auth";
+import { verifyNpciClCredential } from "./npci-cl";
 import {
   accountLabel, debitAccount, getAccount, insertTxn, replayFor,
 } from "./ledger";
@@ -28,7 +28,7 @@ export async function pay(userId: number, b: Record<string, unknown>) {
 
   if (key) { const r = replay(userId, key, amountPaise); if (r) return r; }
 
-  if (method === "bank") await verifyPin(userId, b.pin);
+  if (method === "bank") await verifyNpciClCredential(userId, b.pin);
   else if (amountPaise > config.upiLite.maxTxnPaise) {
     throw new ApiError(400, "LITE_LIMIT", `UPI Lite se max ₹${rupees(config.upiLite.maxTxnPaise)} tak hi pay ho sakta hai`);
   }
@@ -65,7 +65,7 @@ export async function topUpLite(userId: number, b: Record<string, unknown>) {
   const key = idemKey(b.idempotencyKey);
   if (key) { const r = replay(userId, key, amountPaise); if (r) return r; }
 
-  await verifyPin(userId, b.pin);
+  await verifyNpciClCredential(userId, b.pin);
 
   return transaction((db) => {
     if (key) { const r = replay(userId, key, amountPaise); if (r) return r; }
