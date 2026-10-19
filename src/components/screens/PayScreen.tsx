@@ -1,0 +1,47 @@
+"use client";
+
+import { Icon } from "@/components/Icon";
+import { useEk } from "@/context/EkContext";
+
+export function PayScreen() {
+  const {
+    contacts,
+    setNumModal,
+    setNumInput,
+    setPayToIdx,
+    setPayAmt,
+    go,
+  } = useEk();
+
+  return (
+    <>
+      <div className="qa" style={{ marginBottom: 10 }}>
+        <button onClick={() => go("scan")}><span className="it"><Icon n="scan" /></span>Scan QR</button>
+        <button onClick={() => { setNumInput(""); setNumModal("mobile"); }}><span className="it"><Icon n="phone" /></span>Mobile/UPI</button>
+        <button onClick={() => { setNumInput(""); setNumModal("bank"); }}><span className="it"><Icon n="bank" /></span>Bank A/C</button>
+        <button onClick={() => setNumModal("self")}><span className="it"><Icon n="up" /></span>Self Xfer</button>
+      </div>
+      <h3>Verified Contacts</h3>
+      <div className="c">
+        {contacts.map((c, i) => (
+          <button
+            key={i}
+            className="row"
+            onClick={() => {
+              setPayToIdx(i);
+              setPayAmt("");
+              go("amt");
+            }}
+          >
+            <span className="av" style={{ background: "#fce7f0", color: "#9d1048" }}>{c[0][0]}</span>
+            <span className="m">
+              <b>{c[0]}</b>
+              <small>{c[1]} • {c[2]}</small>
+            </span>
+            <span className="mu">Pay →</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
