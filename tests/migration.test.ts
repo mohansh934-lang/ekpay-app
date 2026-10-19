@@ -36,13 +36,19 @@ test("stale open connection (dev hot-reload) gets new migrations applied instead
   const { getDb, MIGRATIONS, one } = await import("../src/server/db");
   const g = globalThis as unknown as { __ekDb: any; __ekDbSchema?: number };
   getDb();
-  // Purane server jaisa haal: connection khula, schema v2, naya code (v3) load ho chuka
-  g.__ekDb.exec("DROP TABLE user_settings");
-  g.__ekDb.exec("PRAGMA user_version = 2");
-  g.__ekDbSchema = 2;
+  // Purane server jaisa haal: connection khula, schema v3, naya code (v4) load ho chuka.
+  // V4 ki cheezein hata kar wapas v3 jaisa DB bana do.
+  for (const sql of [
+    "DROP TABLE complaints", "DROP TABLE collect_requests", "DROP INDEX idx_txn_pending",
+    "ALTER TABLE transactions DROP COLUMN status", "ALTER TABLE transactions DROP COLUMN settles_at",
+    "ALTER TABLE transactions DROP COLUMN final_status", "ALTER TABLE transactions DROP COLUMN failure_reason",
+    "ALTER TABLE bank_accounts DROP COLUMN active", "ALTER TABLE bank_accounts DROP COLUMN ifsc",
+    "PRAGMA user_version = 3",
+  ]) g.__ekDb.exec(sql);
+  g.__ekDbSchema = 3;
 
-  const { getPrefs } = await import("../src/server/settings");
-  assert.equal(getPrefs(1).theme, "light"); // pehle yahan "no such table: user_settings" fenkta tha
+  const { settlePending } = await import("../src/server/settle");
+  assert.equal(settlePending(1), 0); // pehle yahan "no such column: status" fenkta
   assert.equal(one<{ user_version: number }>("PRAGMA user_version")?.user_version, MIGRATIONS.length);
-  assert.ok(one("SELECT name FROM sqlite_master WHERE type='table' AND name='user_settings'"));
+  assert.ok(one("SELECT name FROM sqlite_master WHERE type='table' AND name='complaints'"));
 });

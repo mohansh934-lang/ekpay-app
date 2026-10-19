@@ -3,12 +3,14 @@ import { rupees } from "./money";
 import { listTxns } from "./ledger";
 import type { SessionUser } from "./auth";
 import { getPrefs } from "./settings";
+import { settlePending } from "./settle";
 
 /** Ek call me poora dashboard snapshot (amounts rupees me, internally paise). */
 export function getState(user: SessionUser) {
   const uid = user.id;
+  settlePending(uid);
   const accounts = many<{ id: number; bank_name: string; last4: string; balance_paise: number; is_primary: number }>(
-    "SELECT id, bank_name, last4, balance_paise, is_primary FROM bank_accounts WHERE user_id = ? ORDER BY is_primary DESC, id", uid
+    "SELECT id, bank_name, last4, balance_paise, is_primary FROM bank_accounts WHERE user_id = ? AND active = 1 ORDER BY is_primary DESC, id", uid
   );
   const w = one<{ lite: number; gold: number; due: number; budget: number }>(
     "SELECT lite_balance_paise AS lite, gold_ug AS gold, card_due_paise AS due, budget_paise AS budget FROM wallets WHERE user_id = ?", uid

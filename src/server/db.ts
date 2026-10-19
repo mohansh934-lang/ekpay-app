@@ -144,7 +144,54 @@ CREATE TABLE user_settings (
 );
 `;
 
-export const MIGRATIONS: string[] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3];
+/**
+ * V4: UPI simulator upgrade.
+ *  - transactions.status (success / pending / failed) + pending settle fields
+ *  - bank_accounts.active (unlink = soft delete, kyunki purani transactions us account ko reference karti hain)
+ *  - collect_requests (request money) aur complaints (dispute tracking)
+ */
+const SCHEMA_V4 = `
+ALTER TABLE transactions ADD COLUMN status TEXT NOT NULL DEFAULT 'success' CHECK (status IN ('success','pending','failed'));
+ALTER TABLE transactions ADD COLUMN settles_at INTEGER;
+ALTER TABLE transactions ADD COLUMN final_status TEXT CHECK (final_status IN ('success','failed'));
+ALTER TABLE transactions ADD COLUMN failure_reason TEXT;
+CREATE INDEX idx_txn_pending ON transactions(user_id, status) WHERE status = 'pending';
+
+ALTER TABLE bank_accounts ADD COLUMN active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1));
+ALTER TABLE bank_accounts ADD COLUMN ifsc TEXT;
+
+CREATE TABLE collect_requests (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  requester_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  payer_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount_paise INTEGER NOT NULL CHECK (amount_paise > 0),
+  note         TEXT,
+  status       TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','declined','cancelled','expired')),
+  created_at   INTEGER NOT NULL,
+  expires_at   INTEGER NOT NULL,
+  resolved_at  INTEGER,
+  txn_id       INTEGER REFERENCES transactions(id)
+);
+CREATE INDEX idx_collect_payer ON collect_requests(payer_id, status);
+CREATE INDEX idx_collect_requester ON collect_requests(requester_id, id DESC);
+
+CREATE TABLE complaints (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  txn_id      INTEGER NOT NULL REFERENCES transactions(id),
+  ticket      TEXT NOT NULL UNIQUE,
+  category    TEXT NOT NULL CHECK (category IN ('debited_not_received','failed_but_debited','wrong_payee','duplicate_charge','pending_too_long','other')),
+  description TEXT NOT NULL,
+  status      TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','in_review','resolved','rejected')),
+  resolution  TEXT,
+  created_at  INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX uq_complaint_active ON complaints(txn_id) WHERE status IN ('open','in_review');
+CREATE INDEX idx_complaints_user ON complaints(user_id, id DESC);
+`;
+
+export const MIGRATIONS: string[] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4];
 
 function open(): DB {
   const proc = process as unknown as { getBuiltinModule?: (id: string) => unknown };

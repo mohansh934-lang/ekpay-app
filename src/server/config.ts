@@ -21,6 +21,17 @@ export const config = {
   maxBudgetPaise: 1_00_00_000_00, // ₹1 crore
   goldPricePerGramPaise: 7_820_00, // static demo price
 
+  // UPI simulator extras
+  collectExpiryMs: 24 * 60 * 60 * 1000,
+  maxLinkedAccounts: 6,
+  /** Simulated 'pending' UPI txn itne ms baad apne aap success/failed ho jaata hai. */
+  get pendingSettleMs(): number { return Number(process.env.EK_PENDING_SETTLE_MS) || 20_000; },
+  /** Demo complaint tracking: open -> in_review -> resolved. */
+  get complaintReviewMs(): number { return Number(process.env.EK_COMPLAINT_REVIEW_MS) || 60_000; },
+  get complaintResolveMs(): number { return Number(process.env.EK_COMPLAINT_RESOLVE_MS) || 180_000; },
+  /** 'mock' = simulator (abhi). 'real' = NPCI Common Library wala RealUpiSdkService (PSP tie-up ke baad). */
+  get upiSdk(): "mock" | "real" { return process.env.EK_UPI_SDK === "real" ? "real" : "mock"; },
+
   /** HMAC pepper: DB leak hone par 4-digit PIN brute-force mushkil banata hai. */
   get pepper(): string {
     const p = process.env.EK_PEPPER;

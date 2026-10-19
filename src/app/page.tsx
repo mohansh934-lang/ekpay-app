@@ -454,6 +454,10 @@ const SCREEN_TITLES: Record<string, string> = {
   fd: "Fixed Deposits",
   ipo: "IPO Center",
   nps: "Pension & Tax Saver",
+  addbank: "Link Bank Account (NPCI)",
+  collect: "Collect Money & Requests",
+  complaints: "UPI Disputes & Tickets",
+  forgotpin: "Reset Forgot UPI PIN",
 };
 
 // The 4 Root Bottom Tabs where Back Button should NOT appear
@@ -476,6 +480,79 @@ export default function EkAppFullStack() {
   const [soundOn, setSoundOn] = useState(true);
   const [intlUpi, setIntlUpi] = useState(false);
   const [upiLiteBal, setUpiLiteBal] = useState(420);
+
+  // --- NATIVE SQLITE BACKEND + UPI HUB STATES ---
+  const [sessionUser, setSessionUser] = useState<{ name: string; phone: string; upiId: string } | null>(null);
+
+  const [serverBanks, setServerBanks] = useState<{ id: number; label: string; balance: number; isPrimary: boolean }[]>([]);
+  const [npciBanks, setNpciBanks] = useState<{ id: string; name: string; category: string; popular: boolean }[]>([]);
+  const [bankQuery, setBankQuery] = useState("");
+  const [pickedBank, setPickedBank] = useState<{ id: string; name: string } | null>(null);
+  const [discoveredAccs, setDiscoveredAccs] = useState<{ last4: string; type: string; maskedNumber: string; ifsc: string }[] | null>(null);
+  const [checkedBalances, setCheckedBalances] = useState<Record<number, number>>({});
+  const [balCheckModal, setBalCheckModal] = useState<{ id: number; label: string; pin: string } | null>(null);
+
+  const [collectVpa, setCollectVpa] = useState("");
+  const [collectAmt, setCollectAmt] = useState("");
+  const [collectNote, setCollectNote] = useState("");
+  const [collectList, setCollectList] = useState<{ incoming: any[]; outgoing: any[] }>({ incoming: [], outgoing: [] });
+  const [collectPinMap, setCollectPinMap] = useState<Record<number, string>>({});
+
+  const [complaintsList, setComplaintsList] = useState<any[]>([]);
+  const [compCat, setCompCat] = useState("debited_not_received");
+  const [compDesc, setCompDesc] = useState("");
+
+  const [resetPass, setResetPass] = useState("");
+  const [resetNewPin, setResetNewPin] = useState("");
+  const [simMode, setSimMode] = useState<"" | "pending" | "deferred_failed" | "failed" | "bank_down">("");
+
+  const refreshServerState = async () => {
+    try {
+      const r = await fetch("/api/state");
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d.user) setSessionUser(d.user);
+      if (Array.isArray(d.banks) && d.banks.length) {
+        setServerBanks(d.banks);
+        setBanks(d.banks.map((b: any) => [b.label, b.balance]));
+      }
+      if (typeof d.upiLiteBalance === "number") setUpiLiteBal(d.upiLiteBalance);
+      if (typeof d.goldGrams === "number") setGoldGrams(d.goldGrams);
+      if (typeof d.cardDue === "number") setCardDue(d.cardDue);
+      if (typeof d.budget === "number") setBudget(d.budget);
+      if (Array.isArray(d.loans) && d.loans[0]) setEmiPaid(d.loans[0].paidEmis);
+    } catch {}
+  };
+
+  const loadCollectAndComplaints = async () => {
+    try {
+      const [cRes, cmpRes] = await Promise.all([fetch("/api/collect"), fetch("/api/complaints")]);
+      if (cRes.ok) {
+        const cd = await cRes.json();
+        setCollectList({ incoming: cd.incoming || [], outgoing: cd.outgoing || [] });
+      }
+      if (cmpRes.ok) {
+        const cmpd = await cmpRes.json();
+        setComplaintsList(cmpd.complaints || []);
+      }
+    } catch {}
+  };
+
+  const searchNpciBanks = async (q = "") => {
+    try {
+      const r = await fetch(`/api/banks?q=${encodeURIComponent(q)}`);
+      if (r.ok) {
+        const d = await r.json();
+        setNpciBanks(d.banks || []);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    refreshServerState();
+    loadCollectAndComplaints();
+    searchNpciBanks("");
+  }, []);
 
   // ---- Settings (is browser me save hote hain: localStorage "ek_prefs") ----
   const [theme, setTheme] = useState<ThemePref>("light");
@@ -1082,7 +1159,20 @@ export default function EkAppFullStack() {
                 <i key={i} className={i < lockPin.length ? "f" : ""}></i>
               ))}
             </div>
-            <div className="kp">
+            <div style={{ margin: "4px 0 8px" }}>
+                  <select
+                    value={simMode}
+                    onChange={(e) => setSimMode(e.target.value as any)}
+                    style={{ padding: "6px 10px", fontSize: 12, marginTop: 2 }}
+                  >
+                    <option value="">⚡ Normal Instant UPI Payment</option>
+                    <option value="pending">⏳ Simulate: Pending (Settles in 20s)</option>
+                    <option value="deferred_failed">↩️ Simulate: Pending → Failed + Auto Refund</option>
+                    <option value="failed">✖ Simulate: Bank Declined (₹0 Debited)</option>
+                    <option value="bank_down">🚫 Simulate: Remitter Bank Server Down</option>
+                  </select>
+                </div>
+                <div className="kp">
               {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"].map((k) => (
                 <button key={k} onClick={() => handleLockKey(k)}>{k}</button>
               ))}
@@ -1218,6 +1308,13 @@ export default function EkAppFullStack() {
                   <button onClick={() => { setNumInput(""); setNumModal("mobile"); }}><span className="it"><Icon n="phone" /></span>To Mobile/ID</button>
                   <button onClick={() => setNumModal("self")}><span className="it"><Icon n="bank" /></span>Self Transfer</button>
                 </div>
+                <div className="chips" style={{ marginTop: 8 }}>
+                  <button className="chip on" onClick={() => { searchNpciBanks(""); go("addbank"); }}>+ Link Bank Account</button>
+                  <button className="chip" onClick={() => { loadCollectAndComplaints(); go("collect"); }}>
+                    📥 Collect Money {collectList.incoming.filter((x) => x.status === "pending").length > 0 ? `(${collectList.incoming.filter((x) => x.status === "pending").length})` : ""}
+                  </button>
+                  <button className="chip" onClick={() => { loadCollectAndComplaints(); go("complaints"); }}>🛡️ UPI Disputes</button>
+                </div>
 
                 <h3>Credit, Loans & Protection</h3>
                 <div className="qa sq">
@@ -1347,30 +1444,79 @@ export default function EkAppFullStack() {
                   
                 </div>
 
-                <h3>Linked Bank Accounts</h3>
+                <h3>Linked Bank Accounts <button onClick={() => { searchNpciBanks(""); go("addbank"); }}>+ Add Bank</button></h3>
                 <div className="c">
-                  {banks.map((b, i) => (
-                    <div key={i} className="row">
-                      <span className="it"><Icon n="bank" /></span>
-                      <span className="m">
-                        <b>{b[0]} {i === 0 && <small className="cr">(Primary)</small>}</b>
-                        <small>Balance: {hideBal ? "₹ ••••••" : inr(b[1])}</small>
-                      </span>
-                      <button
-                        className="chip"
-                        onClick={() =>
-                          act(async () => {
-                            const r = await apiCall("POST", "/api/accounts/deposit", {
-                              amount: 10000, bankAccountId: accountIds[i], idempotencyKey: newKey(),
+                  {(serverBanks.length ? serverBanks : banks.map((b, idx) => ({ id: idx + 1, label: b[0], balance: b[1], isPrimary: idx === 0 }))).map((b, i) => (
+                    <div key={b.id || i} className="row" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span className="it"><Icon n="bank" /></span>
+                        <span className="m">
+                          <b>{b.label} {b.isPrimary && <small className="cr">(Primary)</small>}</b>
+                          <small>
+                            {checkedBalances[b.id] !== undefined
+                              ? `Verified Balance: ${inr(checkedBalances[b.id])}`
+                              : hideBal ? "Balance: ₹ ••••••" : `Balance: ${inr(b.balance)}`}
+                          </small>
+                        </span>
+                        <button
+                          className="chip on"
+                          onClick={() => setBalCheckModal({ id: b.id, label: b.label, pin: "" })}
+                        >
+                          Check Bal
+                        </button>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, paddingLeft: 46 }}>
+                        {!b.isPrimary && (
+                          <button
+                            className="chip"
+                            style={{ fontSize: 11, padding: "4px 9px" }}
+                            onClick={async () => {
+                              const r = await fetch("/api/accounts/primary", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ bankAccountId: b.id }),
+                              });
+                              if (r.ok) {
+                                await refreshServerState();
+                                showToast(b.label + " set as Primary!");
+                              }
+                            }}
+                          >
+                            Make Primary
+                          </button>
+                        )}
+                        <button
+                          className="chip"
+                          style={{ fontSize: 11, padding: "4px 9px" }}
+                          onClick={async () => {
+                            await fetch("/api/accounts/deposit", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ bankAccountId: b.id, amount: 10000 }),
                             });
-                            if (!r.ok) return showToast(r.message);
-                            await payDone("Money Received", `${inr(10000)} credited to ${b[0]}`);
-                            showToast("₹10,000 credited to " + b[0]);
-                          })
-                        }
-                      >
-                        + ₹10k
-                      </button>
+                            await refreshServerState();
+                            showToast("₹10,000 credited to " + b.label);
+                          }}
+                        >
+                          + Deposit ₹10k
+                        </button>
+                        <button
+                          className="chip"
+                          style={{ fontSize: 11, padding: "4px 9px", color: "var(--rd)" }}
+                          onClick={async () => {
+                            const r = await fetch(`/api/accounts/${b.id}`, { method: "DELETE" });
+                            const d = await r.json();
+                            if (r.ok) {
+                              await refreshServerState();
+                              showToast("Bank account unlinked");
+                            } else {
+                              showToast(d?.error?.message || "Cannot unlink");
+                            }
+                          }}
+                        >
+                          Unlink
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1873,6 +2019,324 @@ export default function EkAppFullStack() {
               </>
             )}
 
+            {/* ================= NATIVE SCREEN 1: LINK NEW BANK ACCOUNT (90+ NPCI BANKS) ================= */}
+            {baseView === "addbank" && (
+              <>
+                <div className="c p">
+                  <b>🏦 Link Bank Account via Mobile Number</b>
+                  <small style={{ display: "block", marginTop: 2 }}>
+                    Fetching accounts linked to +91 {sessionUser?.phone || "9876500001"}
+                  </small>
+                  <input
+                    placeholder="Search 90+ UPI Live Banks (e.g. Axis, SBI, Kotak, Gramin)..."
+                    value={bankQuery}
+                    onChange={(e) => {
+                      setBankQuery(e.target.value);
+                      searchNpciBanks(e.target.value);
+                    }}
+                  />
+                </div>
+
+                {pickedBank && (
+                  <div className="c p" style={{ borderColor: "var(--pr)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <b>{pickedBank.name}</b>
+                      <button className="chip" onClick={() => { setPickedBank(null); setDiscoveredAccs(null); }}>Close</button>
+                    </div>
+                    {discoveredAccs === null ? (
+                      <small style={{ display: "block", marginTop: 8 }}>Discovering accounts with NPCI ListAccount...</small>
+                    ) : discoveredAccs.length === 0 ? (
+                      <small style={{ display: "block", marginTop: 8 }}>No account found in this bank.</small>
+                    ) : (
+                      discoveredAccs.map((acc) => (
+                        <div key={acc.last4} className="row" style={{ marginTop: 6 }}>
+                          <span className="it"><Icon n="bank" /></span>
+                          <span className="m">
+                            <b>{acc.type} Account • {acc.maskedNumber}</b>
+                            <small>IFSC: {acc.ifsc}</small>
+                          </span>
+                          <button
+                            className="chip on"
+                            onClick={async () => {
+                              const r = await fetch("/api/accounts/link", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ bankId: pickedBank.id, last4: acc.last4 }),
+                              });
+                              const d = await r.json();
+                              if (r.ok) {
+                                await refreshServerState();
+                                setPickedBank(null);
+                                setDiscoveredAccs(null);
+                                pushNotif("Bank Linked ✓", `${d.account.label} linked to your EkPay UPI`);
+                                go("profile");
+                              } else {
+                                showToast(d?.error?.message || "Could not link bank");
+                              }
+                            }}
+                          >
+                            Link Account
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                <h3>Select Your Bank ({npciBanks.length} UPI Banks)</h3>
+                <div className="c">
+                  {npciBanks.map((b) => (
+                    <button
+                      key={b.id}
+                      className="row"
+                      onClick={async () => {
+                        setPickedBank(b);
+                        setDiscoveredAccs(null);
+                        const r = await fetch("/api/banks/discover", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ bankId: b.id }),
+                        });
+                        const d = await r.json();
+                        if (r.ok) setDiscoveredAccs(d.accounts || []);
+                        else showToast(d?.error?.message || "Discovery failed");
+                      }}
+                    >
+                      <span className="it"><Icon n="bank" /></span>
+                      <span className="m">
+                        <b>{b.name}</b>
+                        <small style={{ textTransform: "capitalize" }}>{b.category.replace("_", " ")} Bank</small>
+                      </span>
+                      {b.popular ? <span className="chip on" style={{ fontSize: 10.5, padding: "3px 8px" }}>★ Popular</span> : <span className="mu">Link →</span>}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* ================= NATIVE SCREEN 2: UPI COLLECT REQUESTS (REQUEST & APPROVE) ================= */}
+            {baseView === "collect" && (
+              <>
+                <div className="c p">
+                  <b>📥 Request Money (UPI Collect)</b>
+                  <small style={{ display: "block", marginTop: 2 }}>Enter friend's EkPay UPI ID to request payment</small>
+                  <input
+                    placeholder="Payer UPI ID (e.g. 9876500002@ekpay)"
+                    value={collectVpa}
+                    onChange={(e) => setCollectVpa(e.target.value.trim())}
+                  />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <input
+                      type="number"
+                      placeholder="Amount ₹"
+                      value={collectAmt}
+                      onChange={(e) => setCollectAmt(e.target.value)}
+                    />
+                    <input
+                      placeholder="Note (e.g. Dinner split)"
+                      value={collectNote}
+                      onChange={(e) => setCollectNote(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    className="btn"
+                    onClick={async () => {
+                      const r = await fetch("/api/collect", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ payerVpa: collectVpa, amount: Number(collectAmt), note: collectNote || undefined }),
+                      });
+                      const d = await r.json();
+                      if (r.ok) {
+                        setCollectVpa("");
+                        setCollectAmt("");
+                        setCollectNote("");
+                        await loadCollectAndComplaints();
+                        showToast("Collect request sent!");
+                      } else {
+                        showToast(d?.error?.message || "Failed to send request");
+                      }
+                    }}
+                  >
+                    Send Collect Request
+                  </button>
+                </div>
+
+                <h3>Incoming Requests (Pay / Decline)</h3>
+                <div className="c">
+                  {collectList.incoming.length === 0 ? (
+                    <div className="row"><small className="m">No incoming collect requests</small></div>
+                  ) : (
+                    collectList.incoming.map((req) => (
+                      <div key={req.id} className="row" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <b>{req.requester.name} requested {inr(req.amount)}</b>
+                          <span className="chip on" style={{ fontSize: 10.5, padding: "2px 8px" }}>{req.status}</span>
+                        </div>
+                        <small>{req.note || req.requester.upiId}</small>
+                        {req.status === "pending" && (
+                          <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                            <input
+                              type="password"
+                              maxLength={6}
+                              placeholder="UPI PIN"
+                              value={collectPinMap[req.id] || ""}
+                              onChange={(e) => setCollectPinMap({ ...collectPinMap, [req.id]: e.target.value.replace(/\D/g, "") })}
+                              style={{ marginTop: 0, maxWidth: 110 }}
+                            />
+                            <button
+                              className="chip on"
+                              onClick={async () => {
+                                const r = await fetch(`/api/collect/${req.id}`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ action: "approve", pin: collectPinMap[req.id] || "" }),
+                                });
+                                const d = await r.json();
+                                if (r.ok) {
+                                  await loadCollectAndComplaints();
+                                  await refreshServerState();
+                                  showToast("Collect Approved & Paid!");
+                                } else {
+                                  showToast(d?.error?.message || "Approval failed");
+                                }
+                              }}
+                            >
+                              Approve & Pay
+                            </button>
+                            <button
+                              className="chip"
+                              onClick={async () => {
+                                await fetch(`/api/collect/${req.id}`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ action: "decline" }),
+                                });
+                                await loadCollectAndComplaints();
+                                showToast("Request Declined");
+                              }}
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <h3>Sent Requests (Outgoing)</h3>
+                <div className="c">
+                  {collectList.outgoing.length === 0 ? (
+                    <div className="row"><small className="m">No sent requests yet</small></div>
+                  ) : (
+                    collectList.outgoing.map((req) => (
+                      <div key={req.id} className="row">
+                        <span className="m">
+                          <b>{inr(req.amount)} from {req.payer.name}</b>
+                          <small>{req.payer.upiId} • {req.status}</small>
+                        </span>
+                        {req.status === "pending" && (
+                          <button
+                            className="chip"
+                            onClick={async () => {
+                              await fetch(`/api/collect/${req.id}`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ action: "cancel" }),
+                              });
+                              await loadCollectAndComplaints();
+                              showToast("Cancelled");
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* ================= NATIVE SCREEN 3: UPI DISPUTES & COMPLAINTS ================= */}
+            {baseView === "complaints" && (
+              <>
+                <div className="c p">
+                  <b>🛡️ EkPay UPI Dispute Resolution Center</b>
+                  <small style={{ display: "block", marginTop: 4 }}>
+                    Tap any transaction in Passbook to raise a complaint. Tickets auto-progress from Open → In Review → Resolved.
+                  </small>
+                </div>
+                <h3>Your Active & Past Tickets ({complaintsList.length})</h3>
+                <div className="c">
+                  {complaintsList.length === 0 ? (
+                    <div className="row"><small className="m">No complaints raised yet.</small></div>
+                  ) : (
+                    complaintsList.map((c) => (
+                      <div key={c.id} className="row" style={{ flexDirection: "column", alignItems: "stretch", gap: 4 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <b>Ticket #{c.ticket}</b>
+                          <span className="chip on" style={{ fontSize: 10.5, padding: "2px 8px" }}>{c.status.replace("_", " ")}</span>
+                        </div>
+                        <small>{c.category.replace(/_/g, " ")} • {inr(c.transaction.amount)} to {c.transaction.counterparty}</small>
+                        <small style={{ color: "var(--tx)" }}>"{c.description}"</small>
+                        {c.resolution && <small className="cr">✓ {c.resolution}</small>}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* ================= NATIVE SCREEN 4: FORGOT / RESET UPI PIN ================= */}
+            {baseView === "forgotpin" && (
+              <div className="c p">
+                <b>🔐 Reset / Forgot UPI PIN</b>
+                <p className="mu" style={{ marginTop: 4 }}>
+                  Verify your EkPay account password to set a new 4 or 6 digit UPI PIN and clear any PIN lockouts.
+                </p>
+                <small style={{ display: "block", marginTop: 10 }}>Account Password (default: StrongPass123)</small>
+                <input
+                  type="password"
+                  placeholder="Enter account password"
+                  value={resetPass}
+                  onChange={(e) => setResetPass(e.target.value)}
+                />
+                <small style={{ display: "block", marginTop: 10 }}>New 4 or 6 Digit UPI PIN</small>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Enter new UPI PIN (e.g. 1234)"
+                  value={resetNewPin}
+                  onChange={(e) => setResetNewPin(e.target.value.replace(/\D/g, ""))}
+                />
+                <button
+                  className="btn"
+                  onClick={async () => {
+                    const r = await fetch("/api/auth/reset-pin", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ password: resetPass, newPin: resetNewPin }),
+                    });
+                    const d = await r.json();
+                    if (r.ok) {
+                      setUserPin(resetNewPin);
+                      setResetPass("");
+                      setResetNewPin("");
+                      showToast("UPI PIN Reset Successfully!");
+                      back();
+                    } else {
+                      showToast(d?.error?.message || "Reset failed");
+                    }
+                  }}
+                >
+                  Verify & Reset UPI PIN
+                </button>
+              </div>
+            )}
+
             {baseView === "upilite" && (
               <div className="c p">
                 <b>⚡ EkPay UPI Lite</b>
@@ -1959,8 +2423,49 @@ export default function EkAppFullStack() {
                     <div className="row"><small className="m">Category</small><b style={{ fontSize: 13 }}>{t.cat}</b></div>
                     <div className="row"><small className="m">UTR / Ref ID</small><b style={{ fontSize: 13 }}>{t.ref}</b></div>
                   </div>
-                  <button className="btn" onClick={() => downloadReceipt(t)}>Download Official Receipt (.txt)</button>
-                  <button className="btn o" onClick={() => go("split")}>Split this bill with friends</button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="btn" onClick={() => downloadReceipt(t)}>📄 Download Receipt</button>
+                    <button className="btn o" onClick={() => go("split")}>👥 Split Bill</button>
+                  </div>
+                  <div className="c p" style={{ marginTop: 12 }}>
+                    <b>🛡️ Have an issue with this transaction?</b>
+                    <small style={{ display: "block", marginBottom: 8 }}>Raise an official NPCI / EkPay dispute ticket</small>
+                    <select value={compCat} onChange={(e) => setCompCat(e.target.value)} style={{ marginBottom: 8 }}>
+                      <option value="debited_not_received">Amount debited but not received by payee</option>
+                      <option value="failed_but_debited">Transaction failed but money deducted</option>
+                      <option value="pending_too_long">Transaction stuck in Pending state</option>
+                      <option value="wrong_payee">Sent to wrong UPI ID / account</option>
+                      <option value="duplicate_charge">Paid twice (Duplicate charge)</option>
+                      <option value="other">Other UPI issue</option>
+                    </select>
+                    <input
+                      placeholder="Describe issue (min 10 chars)..."
+                      value={compDesc}
+                      onChange={(e) => setCompDesc(e.target.value)}
+                    />
+                    <button
+                      className="btn"
+                      onClick={async () => {
+                        if (compDesc.trim().length < 10) return showToast("Please write at least 10 characters");
+                        const r = await fetch("/api/complaints", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ txnId: t.id, category: compCat, description: compDesc.trim() }),
+                        });
+                        const d = await r.json();
+                        if (r.ok) {
+                          setCompDesc("");
+                          await loadCollectAndComplaints();
+                          showToast(`Ticket Raised: ${d.complaint.ticket}`);
+                          go("complaints");
+                        } else {
+                          showToast(d?.error?.message || "Could not raise complaint");
+                        }
+                      }}
+                    >
+                      Raise UPI Dispute Ticket
+                    </button>
+                  </div>
                 </>
               );
             })()}
@@ -2756,6 +3261,45 @@ export default function EkAppFullStack() {
               ))}
             </div>
             <button className="btn o" onClick={() => { setPinSheet(false); setPinErr(""); payKey.current = ""; }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {balCheckModal && (
+        <div id="sh">
+          <div className="sb" style={{ textAlign: "center" }}>
+            <b>Check Bank Balance</b>
+            <p className="mu">{balCheckModal.label}</p>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="Enter 4-digit UPI PIN (1234)"
+              value={balCheckModal.pin}
+              onChange={(e) => setBalCheckModal({ ...balCheckModal, pin: e.target.value.replace(/\D/g, "") })}
+              style={{ textAlign: "center", fontSize: 18, letterSpacing: 6 }}
+            />
+            <button
+              className="btn"
+              onClick={async () => {
+                const r = await fetch("/api/accounts/balance", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ bankAccountId: balCheckModal.id, pin: balCheckModal.pin }),
+                });
+                const d = await r.json();
+                if (r.ok) {
+                  setCheckedBalances((prev) => ({ ...prev, [balCheckModal.id]: d.balance }));
+                  setBalCheckModal(null);
+                  showToast(`Balance: ${inr(d.balance)}`);
+                } else {
+                  showToast(d?.error?.message || "Invalid UPI PIN");
+                }
+              }}
+            >
+              Verify PIN & Fetch Balance
+            </button>
+            <button className="btn o" onClick={() => setBalCheckModal(null)}>Cancel</button>
           </div>
         </div>
       )}

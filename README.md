@@ -67,3 +67,29 @@ Error codes jo frontend ko handle karne chahiye: `INVALID_PIN` (`remainingAttemp
 - Real money ke liye licensed PSP / bank partner, KYC, aur audit logging zaroori hoga.
 - UI me abhi bhi local hain (server pe save nahi hote): **Autopay mandates**, **contacts / naye payee**, **notifications**, **Split bill**. Ye paisa move nahi karte.
 - Database schema badalna ho to `src/server/db.ts` me naya migration add karo (purane ko mat chhedo). Purane DB apne aap upgrade ho jaate hain.
+
+
+## UPI Hub upgrade (simulator)
+
+Naye features (sab `/upi` page par, backend `/api/*`):
+
+| Feature | Endpoint |
+|---|---|
+| Bank list (searchable, popular upar) | `GET /api/banks?q=` |
+| Bank me accounts dhundhna / link | `POST /api/banks/discover`, `POST /api/accounts/link` |
+| Unlink / primary / balance (PIN ke saath) | `DELETE /api/accounts/:id`, `POST /api/accounts/primary`, `POST /api/accounts/balance` |
+| Collect request (maango / approve / decline / cancel) | `GET,POST /api/collect`, `POST /api/collect/:id` |
+| Transaction status (success / pending / failed) + detail | `GET /api/transactions?status=`, `GET /api/transactions/:id` |
+| Complaints + status tracking | `GET,POST /api/complaints` |
+| Forgot UPI PIN | `POST /api/auth/reset-pin` |
+
+**NPCI Common Library abhi nahi hai**, isliye sab kuch `src/server/upi/sdk.ts` ke `UpiSdkService` interface ke peeche hai.
+`MockUpiSdkService` chalta hai. PSP sandbox milne par `RealUpiSdkService` bharo aur `EK_UPI_SDK=real` karo.
+Real UPI me PIN kabhi server/app tak nahi aata (sirf NPCI CL ka secure UI), mock me wo server par verify hota hai.
+
+**Bank list:** `src/server/banks.ts` me ek seed list (~90 banks) hai, NPCI ki poori list nahi. Poori list ke liye NPCI ki
+"UPI Live Members" list se `data/upi-banks.json` banao: `[{"id":"hdfc-bank","name":"HDFC Bank","category":"private","popular":true}]`.
+
+**Simulate outcomes (sirf `EK_DEMO_MODE`):** `POST /api/payments` me `"simulate": "pending" | "deferred_failed" | "failed" | "bank_down"`.
+
+**Secrets:** API keys sirf env se (`.env.example` dekho). Pehle teen routes me keys hardcoded thi: purani keys rotate karo.
