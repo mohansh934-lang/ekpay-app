@@ -43,7 +43,7 @@ h3{margin:16px 0 6px;font-size:14px;font-weight:600;display:flex;justify-content
 h3 button{font-size:12px;color:var(--pr);font-weight:600}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0;scrollbar-width:none}
 .chip{flex:none;padding:6px 12px;border-radius:16px;background:var(--cd);border:1px solid var(--ln);font-size:12px;font-weight:500}
-.chip.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.chip.on{background:var(--pr);color:#ffffff !important;border-color:var(--pr);box-shadow:0 0 12px rgba(232,26,108,.45)}
 .btn{background:var(--pr);color:#fff;padding:13px;border-radius:12px;font-weight:600;width:100%;margin-top:10px;font-size:13.5px}
 .btn.o{background:none;color:var(--pr);border:1.5px solid var(--pr)}
 .btn.g{background:var(--gr)}.btn.r{background:var(--rd)}
@@ -115,4 +115,120 @@ select{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--ln
 }
 :root[data-theme="dark"] .btn.g {
   color: #0b1a12;
+}
+
+
+/* SUBTLE-DARK-GLOW-V2 */
+:root[data-theme="dark"] .chip {
+  background: linear-gradient(145deg, rgba(255, 92, 158, 0.14), rgba(255, 92, 158, 0.05)) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 120, 175, 0.32) !important;
+}
+:root[data-theme="dark"] .chip.on,
+:root[data-theme="dark"] .chip:active,
+:root[data-theme="dark"] .chip:focus {
+  background: linear-gradient(145deg, rgba(255, 92, 158, 0.34), rgba(232, 26, 108, 0.22)) !important;
+  color: #ffffff !important;
+  border-color: #ff7eb3 !important;
+  box-shadow: 0 0 14px rgba(255, 92, 158, 0.65), inset 0 0 6px rgba(255, 255, 255, 0.18) !important;
+  outline: none !important;
+}
+:root[data-theme="dark"] .it:active,
+:root[data-theme="dark"] .qa button:active .it,
+:root[data-theme="dark"] .qa button:focus .it,
+:root[data-theme="dark"] #nv button.on {
+  border-color: #ff7eb3 !important;
+  box-shadow: 0 0 16px rgba(255, 92, 158, 0.65), inset 0 0 8px rgba(255, 92, 158, 0.28) !important;
+  color: #ffffff !important;
+}
+
+/* EK-MINOR-ANIMATIONS */
+@keyframes ek-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ek-sheet-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ek-toast-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes ek-pop {
+  0%   { transform: scale(0.92); }
+  60%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+/* Screens fade gently when switching */
+#app main,
+[class*="baseView"],
+.hero,
+.c,
+.qa {
+  animation: ek-fade-in 0.28s ease both;
+}
+
+/* Bottom sheets */
+#sh .sb {
+  animation: ek-sheet-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Toast */
+#toast {
+  animation: ek-toast-in 0.28s ease both;
+}
+
+/* Buttons / chips / icons — soft press */
+.qa button,
+.chip,
+.btn,
+#nv button,
+.it {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.qa button:active,
+.chip:active,
+.btn:active,
+#nv button:active {
+  transform: scale(0.96);
+}
+
+/* PIN boxes gentle pop when filled */
+.hero .bk span {
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+/* Balance number soft fade */
+.hero h1 {
+  transition: opacity 0.25s ease;
+}
+
+/* Row items */
+.row {
+  transition: background 0.15s ease;
+}
+
+/* EK-TOAST-FIX */
+#toast {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: 88px !important;
+  top: auto !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
+  max-width: min(90vw, 340px) !important;
+  width: max-content !important;
+  padding: 10px 16px !important;
+  border-radius: 12px !important;
+  text-align: center !important;
+  pointer-events: none !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25) !important;
+  animation: ek-toast-in 0.28s ease both !important;
+}
+@keyframes ek-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }

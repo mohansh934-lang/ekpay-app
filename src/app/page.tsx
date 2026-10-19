@@ -490,7 +490,12 @@ export default function EkAppFullStack() {
   const [pickedBank, setPickedBank] = useState<{ id: string; name: string } | null>(null);
   const [discoveredAccs, setDiscoveredAccs] = useState<{ last4: string; type: string; maskedNumber: string; ifsc: string }[] | null>(null);
   const [checkedBalances, setCheckedBalances] = useState<Record<number, number>>({});
-  const [balCheckModal, setBalCheckModal] = useState<{ id: number; label: string; pin: string } | null>(null);
+  const [balCheckModal, setBalCheckModal] = useState<{ id: number; label: string; pin: string; queue?: { id: number; label: string }[]; step?: number; totalSteps?: number } | null>(null);
+  const [balSheetOpen, setBalSheetOpen] = useState(false);
+  const [heroBalMode, setHeroBalMode] = useState<"hidden" | "single" | "total">("hidden");
+  const [heroSingleBankId, setHeroSingleBankId] = useState<number | null>(null);
+  const [balPinBusy, setBalPinBusy] = useState(false);
+  const [balPinError, setBalPinError] = useState("");
 
   const [collectVpa, setCollectVpa] = useState("");
   const [collectAmt, setCollectAmt] = useState("");
@@ -505,6 +510,7 @@ export default function EkAppFullStack() {
   const [resetPass, setResetPass] = useState("");
   const [resetNewPin, setResetNewPin] = useState("");
   const [simMode, setSimMode] = useState<"" | "pending" | "deferred_failed" | "failed" | "bank_down">("");
+
 
   const refreshServerState = async () => {
     try {
@@ -618,6 +624,30 @@ export default function EkAppFullStack() {
     ["SBI ••7790", 12540],
     ["ICICI Bank ••3306", 8915],
   ]);
+
+  const getLiveBanks = () =>
+    banks.map((b, i) => ({
+      id: serverBanks[i]?.id ?? accountIds[i] ?? i + 1,
+      label: b[0],
+      balance: b[1],
+      isPrimary: serverBanks[i]?.isPrimary ?? i === 0,
+    }));
+
+  // Jab bhi paisa kharch/receive ho, unlocked banks ka balance live update
+  useEffect(() => {
+    setCheckedBalances((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      banks.forEach((b, i) => {
+        const id = serverBanks[i]?.id ?? accountIds[i] ?? i + 1;
+        if (next[id] !== undefined && next[id] !== b[1]) {
+          next[id] = b[1];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [banks, serverBanks]);
   const [holdings, setHoldings] = useState<Record<string, { qty: number; avg: number }>>({
     RELIANCE: { qty: 12, avg: 2780 },
     TCS: { qty: 8, avg: 3910 },
@@ -1263,19 +1293,33 @@ export default function EkAppFullStack() {
               <>
                 <div className="hero">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 5 }}>
-                    <small>Total balance • {myUpi}</small>
+                    <small>
+                      {heroBalMode === "hidden"
+                        ? "Total balance • " + myUpi
+                        : Object.keys(checkedBalances).length === getLiveBanks().length && getLiveBanks().length > 0
+                        ? "Total Verified Balance (All Banks)"
+                        : Object.keys(checkedBalances).length > 0
+                        ? `Verified • ${Object.keys(checkedBalances).length} of ${getLiveBanks().length} banks`
+                        : "Total balance • " + myUpi}
+                    </small>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         tone(660, 0.04);
-                        setHideBal((prev) => !prev);
+                        if (heroBalMode !== "hidden") {
+                          setHeroBalMode("hidden");
+                          setHeroSingleBankId(null);
+                          setCheckedBalances({}); // teeno banks wapas dots pe
+                        } else {
+                          setBalSheetOpen(true);
+                        }
                       }}
                       style={{
                         padding: "5px 11px",
                         borderRadius: 10,
-                        background: hideBal ? "#3ccf91" : "rgba(255,255,255,.22)",
-                        color: hideBal ? "#052e16" : "#fff",
+                        background: heroBalMode === "hidden" ? "#3ccf91" : "rgba(255,255,255,.22)",
+                        color: heroBalMode === "hidden" ? "#052e16" : "#fff",
                         fontWeight: 600,
                         display: "flex",
                         gap: 5,
@@ -1284,38 +1328,57 @@ export default function EkAppFullStack() {
                         cursor: "pointer",
                       }}
                     >
-                      <Icon n="eye" s={14} /> {hideBal ? "Show Balance" : "Hide Balance"}
+                      <Icon n="eye" s={14} /> {heroBalMode === "hidden" ? "Show Balance" : "Hide Balance"}
                     </button>
                   </div>
                   <h1 style={{ position: "relative", zIndex: 2 }}>
-                    {hideBal ? "₹ ••••••" : inr(totalBal)}
+                    {heroBalMode === "hidden"
+                      ? "₹ ••••••"
+                      : inr(
+                          getLiveBanks()
+                            .filter((b) => checkedBalances[b.id] !== undefined)
+                            .reduce((sum, b) => sum + b.balance, 0)
+                        )}
                   </h1>
                   <div className="bk" style={{ position: "relative", zIndex: 2 }}>
-                    {banks.map((b, i) => (
-                      <span key={i}>
-                        {b[0]} · {hideBal ? "₹ ••••" : inr(b[1])}
-                      </span>
-                    ))}
+                    {getLiveBanks().map((b) => {
+                      const isUnlocked = checkedBalances[b.id] !== undefined;
+                      return (
+                        <span
+                          key={b.id}
+                          onClick={() => {
+                            if (isUnlocked) {
+                              setHeroSingleBankId(b.id);
+                              setHeroBalMode("single");
+                            } else {
+                              setBalPinError(""); setBalCheckModal({ id: b.id, label: b.label, pin: "" });
+                            }
+                          }}
+                          style={{
+                            cursor: "pointer",
+                            border: isUnlocked ? "1px solid rgba(255,255,255,0.55)" : "1px solid transparent",
+                          }}
+                        >
+                          {b.label} · {isUnlocked ? inr(b.balance) : "₹ ••••"}
+                        </span>
+                      );
+                    })}
                     <span style={{ background: "rgba(60, 207, 145, 0.22)", color: "#6ee7b7", cursor: "pointer" }} onClick={() => go("upilite")}>
-                      ⚡ UPI Lite: {hideBal ? "₹ •••" : inr(upiLiteBal)}
+                      ⚡ UPI Lite: {inr(upiLiteBal)}
                     </span>
                   </div>
                 </div>
-
                 <div className="qa">
                   <button onClick={() => go("scan")}><span className="it"><Icon n="scan" /></span>Scan QR</button>
                   <button onClick={() => go("pay")}><span className="it"><Icon n="up" /></span>To Contact</button>
                   <button onClick={() => { setNumInput(""); setNumModal("mobile"); }}><span className="it"><Icon n="phone" /></span>To Mobile/ID</button>
                   <button onClick={() => setNumModal("self")}><span className="it"><Icon n="bank" /></span>Self Transfer</button>
-                </div>
-                <div className="chips" style={{ marginTop: 8 }}>
-                  <button className="chip on" onClick={() => { searchNpciBanks(""); go("addbank"); }}>+ Link Bank Account</button>
-                  <button className="chip" onClick={() => { loadCollectAndComplaints(); go("collect"); }}>
-                    📥 Collect Money {collectList.incoming.filter((x) => x.status === "pending").length > 0 ? `(${collectList.incoming.filter((x) => x.status === "pending").length})` : ""}
+                  <button onClick={() => { searchNpciBanks(""); go("addbank"); }}><span className="it"><Icon n="plus" /></span>Link Bank</button>
+                  <button onClick={() => { loadCollectAndComplaints(); go("collect"); }}>
+                    <span className="it"><Icon n="user" /></span>
+                    Collect Money{collectList.incoming.filter((x) => x.status === "pending").length > 0 ? ` (${collectList.incoming.filter((x) => x.status === "pending").length})` : ""}
                   </button>
-                  <button className="chip" onClick={() => { loadCollectAndComplaints(); go("complaints"); }}>🛡️ UPI Disputes</button>
                 </div>
-
                 <h3>Credit, Loans & Protection</h3>
                 <div className="qa sq">
                   <button onClick={() => go("loans")}><span className="it"><Icon n="rup" /></span>Cash Loan</button>
@@ -1446,21 +1509,19 @@ export default function EkAppFullStack() {
 
                 <h3>Linked Bank Accounts <button onClick={() => { searchNpciBanks(""); go("addbank"); }}>+ Add Bank</button></h3>
                 <div className="c">
-                  {(serverBanks.length ? serverBanks : banks.map((b, idx) => ({ id: idx + 1, label: b[0], balance: b[1], isPrimary: idx === 0 }))).map((b, i) => (
+                  {getLiveBanks().map((b, i) => (
                     <div key={b.id || i} className="row" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <span className="it"><Icon n="bank" /></span>
                         <span className="m">
                           <b>{b.label} {b.isPrimary && <small className="cr">(Primary)</small>}</b>
                           <small>
-                            {checkedBalances[b.id] !== undefined
-                              ? `Verified Balance: ${inr(checkedBalances[b.id])}`
-                              : hideBal ? "Balance: ₹ ••••••" : `Balance: ${inr(b.balance)}`}
+                            {checkedBalances[b.id] !== undefined ? `Verified Live Balance: ${inr(b.balance)}` : "Balance: ₹ •••••• (Tap Check Bal)"}
                           </small>
                         </span>
                         <button
                           className="chip on"
-                          onClick={() => setBalCheckModal({ id: b.id, label: b.label, pin: "" })}
+                          onClick={() => { setBalPinError(""); setBalCheckModal({ id: b.id, label: b.label, pin: "" }); }}
                         >
                           Check Bal
                         </button>
@@ -1556,6 +1617,14 @@ export default function EkAppFullStack() {
 
                 <h3>Security & Privacy</h3>
                 <div className="c">
+                  <button className="row" onClick={() => { loadCollectAndComplaints(); go("complaints"); }}>
+                    <span className="it"><Icon n="shield" /></span>
+                    <span className="m">
+                      <b>UPI Disputes & Complaint Tickets</b>
+                      <small>Track raised NPCI tickets ({complaintsList.length} total)</small>
+                    </span>
+                    <span className="mu">Open →</span>
+                  </button>
                   <button className="row" onClick={() => { setNumInput(""); setCurPin(""); setNumModal("changepin"); }}>
                     <span className="it"><Icon n="lock" /></span>
                     <span className="m">
@@ -3265,41 +3334,221 @@ export default function EkAppFullStack() {
         </div>
       )}
 
+      {/* SHEET 1: CHOOSE WHICH BANK BALANCE TO CHECK (OR TOTAL STEP-BY-STEP) */}
+      {balSheetOpen && (
+        <div id="sh" onClick={() => setBalSheetOpen(false)}>
+          <div className="sb" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <b>Select Bank to Check Balance</b>
+              <button className="chip" onClick={() => setBalSheetOpen(false)}>Close</button>
+            </div>
+            <small className="mu" style={{ display: "block", marginBottom: 10 }}>
+              Enter separate UPI PIN for the bank you want to view, or verify all banks one-by-one for Total Balance:
+            </small>
+            <div className="c">
+              {getLiveBanks().map((b) => {
+                const isUnlocked = checkedBalances[b.id] !== undefined;
+                return (
+                  <div key={b.id} className="row">
+                    <span className="it"><Icon n="bank" /></span>
+                    <span className="m">
+                      <b>{b.label}</b>
+                      <small>{isUnlocked ? `Unlocked: ${inr(b.balance)}` : "Balance: ₹ ••••••"}</small>
+                    </span>
+                    <button
+                      className="chip on"
+                      onClick={() => {
+                        setBalSheetOpen(false);
+                        setBalPinError(""); setBalCheckModal({ id: b.id, label: b.label, pin: "" });
+                      }}
+                    >
+                      {isUnlocked ? "✓ Checked (View)" : "Check"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              className="btn"
+              style={{ marginTop: 12 }}
+              onClick={() => {
+                const all = getLiveBanks().map((b) => ({ id: b.id, label: b.label }));
+                if (!all.length) return;
+                setBalSheetOpen(false);
+                setBalCheckModal({
+                  id: all[0].id,
+                  label: all[0].label,
+                  pin: "",
+                  queue: all.slice(1),
+                  step: 1,
+                  totalSteps: all.length,
+                });
+              }}
+            >
+              🔐 Check Total Balance (Verify All {getLiveBanks().length} Banks)
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SHEET 2: UPI PIN ENTRY FOR SINGLE BANK OR SEQUENTIAL ALL-BANKS */}
       {balCheckModal && (
         <div id="sh">
           <div className="sb" style={{ textAlign: "center" }}>
-            <b>Check Bank Balance</b>
-            <p className="mu">{balCheckModal.label}</p>
+            {balCheckModal.totalSteps ? (
+              <span className="chip on" style={{ fontSize: 11, marginBottom: 8, display: "inline-block" }}>
+                Total Balance • Bank {balCheckModal.step} of {balCheckModal.totalSteps}
+              </span>
+            ) : null}
+            <b style={{ display: "block", fontSize: 16 }}>Enter UPI PIN for {balCheckModal.label}</b>
+            <p className="mu" style={{ fontSize: 12 }}>
+              {balCheckModal.totalSteps
+                ? `Line-by-Line PIN (${balCheckModal.step}/${balCheckModal.totalSteps}): Verify ${balCheckModal.label}`
+                : "Enter 4-digit UPI PIN (default: 1234)"}
+            </p>
+            {/* Real UPI style 4 PIN boxes */}
+            <div
+              style={{ display: "flex", justifyContent: "center", gap: 14, margin: "18px 0 14px" }}
+              onClick={() => document.getElementById("bal-pin-hidden")?.focus()}
+            >
+              {[0, 1, 2, 3].map((i) => {
+                const len = (balCheckModal.pin || "").length;
+                const filled = len > i;
+                const active = len === i;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 14,
+                      border: active ? "2px solid var(--pr)" : "2px solid var(--ln)",
+                      background: filled ? "var(--pr)" : "var(--card)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 26,
+                      fontWeight: 700,
+                      color: "#fff",
+                      boxShadow: active ? "0 0 0 4px rgba(232,26,108,.22)" : "none",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {filled ? "•" : ""}
+                  </div>
+                );
+              })}
+            </div>
             <input
-              type="password"
+              key={String(balCheckModal.id) + "-" + String(balCheckModal.step || 0)}
+              id="bal-pin-hidden"
+              type="tel"
               inputMode="numeric"
-              maxLength={6}
-              placeholder="Enter 4-digit UPI PIN (1234)"
-              value={balCheckModal.pin}
-              onChange={(e) => setBalCheckModal({ ...balCheckModal, pin: e.target.value.replace(/\D/g, "") })}
-              style={{ textAlign: "center", fontSize: 18, letterSpacing: 6 }}
+              pattern="[0-9]*"
+              maxLength={4}
+              autoFocus
+              autoComplete="off"
+              value={balCheckModal.pin || ""}
+              onChange={(e) => {
+                const onlyDigits = e.target.value.replace(/\D/g, "").slice(0, 4);
+                setBalPinError("");
+                setBalCheckModal({ ...balCheckModal, pin: onlyDigits });
+              }}
+              style={{ position: "absolute", opacity: 0, width: 1, height: 1, pointerEvents: "none" }}
             />
-            <button
+            <div className="kp" style={{ margin: "8px auto 4px", maxWidth: 280 }}>
+              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].map((k) => (
+                <button
+                  key={k || "blank"}
+                  type="button"
+                  disabled={!k}
+                  onClick={() => {
+                    if (!k) return;
+                    if (k === "⌫") {
+                      setBalCheckModal({ ...balCheckModal, pin: (balCheckModal.pin || "").slice(0, -1) });
+                    } else if ((balCheckModal.pin || "").length < 4) {
+                      setBalCheckModal({ ...balCheckModal, pin: (balCheckModal.pin || "") + k });
+                    }
+                  }}
+                  style={!k ? { visibility: "hidden" } : undefined}
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
+                        {balPinError ? (
+              <p style={{ color: "var(--rd, #ef4444)", fontSize: 12.5, margin: "4px 0 10px", fontWeight: 600, textAlign: "center" }}>
+                {balPinError}
+              </p>
+            ) : (
+              <div style={{ height: 22 }} />
+            )}
+                        <button
               className="btn"
+              disabled={balPinBusy}
               onClick={async () => {
+                if (balPinBusy) return;
+                if (!(balCheckModal.pin || "").length) {
+                  showToast("Pehle UPI PIN daalo");
+                  return;
+                }
+                setBalPinBusy(true);
+                try {
                 const r = await fetch("/api/accounts/balance", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ bankAccountId: balCheckModal.id, pin: balCheckModal.pin }),
                 });
-                const d = await r.json();
-                if (r.ok) {
-                  setCheckedBalances((prev) => ({ ...prev, [balCheckModal.id]: d.balance }));
-                  setBalCheckModal(null);
-                  showToast(`Balance: ${inr(d.balance)}`);
+                const d = await r.json().catch(() => ({}));
+                const liveBank = getLiveBanks().find((x) => x.id === balCheckModal.id);
+                const okPin = r.ok;
+
+                if (okPin && liveBank) {
+                  const latestBal = typeof d.balance === "number" ? d.balance : liveBank.balance;
+                  setCheckedBalances((prev) => ({ ...prev, [balCheckModal.id]: latestBal }));
+
+                  if (balCheckModal.queue && balCheckModal.queue.length > 0) {
+                    const [nextBank, ...rest] = balCheckModal.queue;
+                    setBalPinError("");
+                    setBalPinError("");
+                    setBalPinError("");
+                    setBalCheckModal({
+                      id: nextBank.id,
+                      label: nextBank.label,
+                      pin: "",
+                      queue: rest,
+                      step: (balCheckModal.step || 1) + 1,
+                      totalSteps: balCheckModal.totalSteps,
+                    });
+                  } else if (balCheckModal.totalSteps) {
+                    setHeroBalMode("visible");
+                    setHeroSingleBankId(null);
+                    setBalCheckModal(null);
+                    setBalPinError("");
+                  } else {
+                    setHeroSingleBankId(null);
+                    setHeroBalMode("visible"); // unlocked banks ka sum dikhao
+                    setBalCheckModal(null);
+                    setBalPinError("");
+                  }
                 } else {
-                  showToast(d?.error?.message || "Invalid UPI PIN");
+                  const errMsg = d?.error?.message || "Wrong UPI PIN";
+                  const left = d?.error?.remainingAttempts;
+                  setBalPinError(left !== undefined ? `Wrong UPI PIN • ${left} attempts left` : "Wrong UPI PIN");
+                  setBalCheckModal({ ...balCheckModal, pin: "" }); // clear PIN boxes
+                }
+                } finally {
+                  setBalPinBusy(false);
                 }
               }}
             >
-              Verify PIN & Fetch Balance
+              {balPinBusy
+                ? "Verifying…"
+                : balCheckModal.queue && balCheckModal.queue.length > 0
+                ? `Verify ${balCheckModal.label} & Next Bank →`
+                : "Verify UPI PIN & Show Balance"}
             </button>
-            <button className="btn o" onClick={() => setBalCheckModal(null)}>Cancel</button>
+            <button className="btn o" onClick={() => { setBalCheckModal(null); setBalPinBusy(false); setBalPinError(""); }}>Cancel</button>
           </div>
         </div>
       )}
