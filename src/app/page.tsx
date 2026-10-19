@@ -1,475 +1,27 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
-const inr = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
-
-// ---- Server data -> UI shape helpers ----
-const fmtWhen = (iso: string) => {
-  const d = new Date(iso);
-  const now = new Date();
-  const time = d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase();
-  const key = (x: Date) => x.getFullYear() * 10000 + x.getMonth() * 100 + x.getDate();
-  const yest = new Date(now);
-  yest.setDate(now.getDate() - 1);
-  if (key(d) === key(now)) return `Today, ${time}`;
-  if (key(d) === key(yest)) return `Yesterday, ${time}`;
-  return `${d.getDate()} ${d.toLocaleString("en-IN", { month: "short" })}, ${time}`;
-};
-const mapServerTxn = (t: any) => ({
-  id: t.id, mode: t.source, n: t.counterparty, cat: t.category, cr: t.type === "credit",
-  amt: t.amount, d: fmtWhen(t.createdAt), bank: t.bank, ref: t.ref,
-});
-
-const I: Record<string, string> = {
-  home: '<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
-  rec: '<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
-  scan: '<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"/>',
-  up: '<path d="M7 17L17 7M8 7h9v9"/>',
-  down: '<path d="M17 7L7 17M16 17H7V8"/>',
-  trend: '<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>',
-  bank: '<path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>',
-  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
-  card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
-  rup: '<path d="M7 5h10M7 9h10M9 5c5 0 6 6 0 6H8l7 8"/>',
-  bell: '<path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7M10 20a2 2 0 0 0 4 0"/>',
-  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
-  back: '<path d="M15 5l-7 7 7 7"/>',
-  eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
-  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
-  phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
-  bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10c1 1 1 2 1 3h6c0-1 0-2 1-3a6 6 0 0 0-4-10z"/>',
-  tv: '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/>',
-  car: '<path d="M5 16v-5l2-5h10l2 5v5H5zM5 16v2M19 16v2M5 11h14"/>',
-  flame: '<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>',
-  train: '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M8 21l2-4M16 21l-2-4"/>',
-  pie: '<path d="M12 3v9h9a9 9 0 1 1-9-9z"/>',
-  tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1"/>',
-  rocket: '<path d="M12 3c3 2 5 6 5 10l-5 3-5-3c0-4 2-8 5-10zM9 19l3 2 3-2"/><circle cx="12" cy="10" r="1.5"/>',
-  moon: '<path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/>',
-  vol: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/>',
-  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
-  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.77 1.02 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
-};
-
-const Icon = ({ n, s = 20 }: { n: string; s?: number }) => (
-  <svg
-    viewBox="0 0 24 24"
-    width={s}
-    height={s}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    dangerouslySetInnerHTML={{ __html: I[n] || I.home }}
-  />
-);
-
-// Official Brand Logo Badge Component (Jio, Airtel, Vi, BSNL, Crunchyroll, Spotify, Netflix, YouTube, etc.)
-function BrandLogo({ brand, size = 42 }: { brand: string; size?: number }) {
-  const b = brand.toLowerCase();
-
-  // 1. JioHotstar (Blue-Purple-Pink Gradient + White Star)
-  if (b.includes("hotstar")) {
-    return (
-      <svg viewBox="0 0 100 100" width={size} height={size} style={{ flex: "none", borderRadius: 11, boxShadow: "0 2px 6px rgba(0,0,0,.15)" }}>
-        <defs>
-          <linearGradient id="jhG" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#00a8ff" />
-            <stop offset="50%" stopColor="#6c2bd9" />
-            <stop offset="100%" stopColor="#ff006e" />
-          </linearGradient>
-        </defs>
-        <rect width="100" height="100" rx="22" fill="url(#jhG)" />
-        <polygon points="50,15 54,34 86,12 60,40 76,48 56,48 50,70 46,48 24,46 42,38 28,22 46,34" fill="#fff" />
-        <text x="50" y="88" textAnchor="middle" fill="#fff" fontSize="14.5" fontWeight="700" fontFamily="Inter,sans-serif">JioHotstar</text>
-      </svg>
-    );
-  }
-
-  // 2. Netflix (Dark Square + Red 'N' Ribbon)
-  if (b.includes("netflix")) {
-    return (
-      <svg viewBox="0 0 100 100" width={size} height={size} style={{ flex: "none", borderRadius: 11, boxShadow: "0 2px 6px rgba(0,0,0,.15)" }}>
-        <rect width="100" height="100" rx="22" fill="#181818" />
-        <rect x="28" y="18" width="14" height="64" fill="#b1060f" />
-        <rect x="58" y="18" width="14" height="64" fill="#b1060f" />
-        <polygon points="28,18 42,18 72,82 58,82" fill="#e50914" />
-      </svg>
-    );
-  }
-
-  // 3. Prime Video (Sky-to-Deep Blue + White Smile Arrow)
-  if (b.includes("prime")) {
-    return (
-      <svg viewBox="0 0 100 100" width={size} height={size} style={{ flex: "none", borderRadius: 11, boxShadow: "0 2px 6px rgba(0,0,0,.15)" }}>
-        <defs>
-          <linearGradient id="pvG" x1="50%" y1="0%" x2="50%" y2="100%">
-            <stop offset="0%" stopColor="#26b5ff" />
-            <stop offset="100%" stopColor="#002e5d" />
-          </linearGradient>
-        </defs>
-        <rect width="100" height="100" rx="22" fill="url(#pvG)" />
-        <text x="50" y="42" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800" fontFamily="Inter,sans-serif">prime</text>
-        <text x="50" y="64" textAnchor="middle" fill="#fff" fontSize="21" fontWeight="700" fontFamily="Inter,sans-serif">video</text>
-        <path d="M 24 72 Q 50 88 76 72" fill="none" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M 69 70 L 78 71 L 74 79" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-
-  // 4. ZEE5 (Dark Box + Colorful Arcs + Cream Circle + ZEE5)
-  if (b.includes("zee5")) {
-    return (
-      <svg viewBox="0 0 100 100" width={size} height={size} style={{ flex: "none", borderRadius: 11, boxShadow: "0 2px 6px rgba(0,0,0,.15)" }}>
-        <rect width="100" height="100" rx="22" fill="#07121e" />
-        <path d="M 52 14 A 36 36 0 1 0 52 86" fill="none" stroke="#2ec4b6" strokeWidth="4" />
-        <path d="M 64 22 A 30 30 0 1 0 62 80" fill="none" stroke="#ffbe0b" strokeWidth="4" />
-        <path d="M 56 26 A 24 24 0 1 0 68 72" fill="none" stroke="#ff006e" strokeWidth="4" />
-        <circle cx="52" cy="50" r="24" fill="#f5ebe0" />
-        <text x="64" y="56" textAnchor="middle" fill="#07121e" fontSize="19" fontWeight="800" fontFamily="Inter,sans-serif">ZEE5</text>
-      </svg>
-    );
-  }
-
-  // 5. Crunchyroll (Glossy Orange + White Eye Swirl)
-  if (b.includes("crunchyroll")) {
-    return (
-      <svg viewBox="0 0 100 100" width={size} height={size} style={{ flex: "none", borderRadius: 11, boxShadow: "0 2px 6px rgba(0,0,0,.15)" }}>
-        <defs>
-          <linearGradient id="crG" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ff9e44" />
-            <stop offset="50%" stopColor="#f47521" />
-            <stop offset="100%" stopColor="#d95b00" />
-          </linearGradient>
-        </defs>
-        <rect width="100" height="100" rx="22" fill="url(#crG)" />
-        <circle cx="50" cy="44" r="24" fill="#fff" />
-        <circle cx="53" cy="46" r="18" fill="#f47521" />
-        <circle cx="48" cy="47" r="14" fill="#fff" />
-        <circle cx="57" cy="40" r="6.5" fill="#f47521" />
-        <text x="50" y="84" textAnchor="middle" fill="#fff" fontSize="13.5" fontWeight="700" fontFamily="Inter,sans-serif">crunchyroll</text>
-      </svg>
-    );
-  }
-
-  // 6. SonyLIV (Dark & Purple Wave + White SONY + Gold liv)
-  if (b.includes("sonyliv") || b.includes("sony")) {
-    return (
-      <svg viewBox="0 0 100 100" width={size} height={size} style={{ flex: "none", borderRadius: 11, boxShadow: "0 2px 6px rgba(0,0,0,.15)" }}>
-        <defs>
-          <linearGradient id="slG" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#090c15" />
-            <stop offset="55%" stopColor="#7209b7" />
-            <stop offset="100%" stopColor="#f72585" />
-          </linearGradient>
-        </defs>
-        <rect width="100" height="100" rx="22" fill="url(#slG)" />
-        <text x="50" y="34" textAnchor="middle" fill="#fff" fontSize="21" fontWeight="800" letterSpacing="1" fontFamily="Georgia,serif">SONY</text>
-        <text x="50" y="82" textAnchor="middle" fill="#ffb703" fontSize="34" fontWeight="900" fontFamily="Inter,sans-serif">liv</text>
-      </svg>
-    );
-  }
-
-  let bg = "#e81a6c", fg = "#fff", txt = brand.slice(0, 2).toUpperCase();
-  if (b.includes("jio")) { bg = "#0a2885"; txt = "Jio"; }
-  else if (b.includes("airtel")) { bg = "#e40000"; txt = "airtel"; }
-  else if (/\bvi\b/.test(b)) { bg = "#ee2737"; fg = "#ffd100"; txt = "Vi"; }
-  else if (b.includes("bsnl")) { bg = "#005baa"; txt = "BSNL"; }
-  else if (b.includes("tata")) { bg = "#6a1b9a"; txt = "TP"; }
-  else if (b.includes("dish")) { bg = "#f57c00"; txt = "d2h"; }
-  else if (b.includes("sun")) { bg = "#d32f2f"; txt = "SUN"; }
-  else if (b.includes("indane")) { bg = "#f37021"; txt = "OIL"; }
-  else if (b.startsWith("hp gas")) { bg = "#004b87"; txt = "HP"; }
-  else if (b.startsWith("bharat gas")) { bg = "#fdd835"; fg = "#0d47a1"; txt = "BG"; }
-  else if (b.includes("irctc")) { bg = "#003366"; txt = "🚆"; }
-
-  return (
-    <span
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size > 40 ? 14 : "50%",
-        background: bg,
-        color: fg,
-        display: "grid",
-        placeItems: "center",
-        fontWeight: 800,
-        fontSize: txt.length > 3 ? 9.5 : 12.5,
-        letterSpacing: -0.3,
-        flex: "none",
-        boxShadow: "0 2px 6px rgba(0,0,0,.12)",
-      }}
-    >
-      {txt}
-    </span>
-  );
-}
-
-// 180-Degree Circular Speedometer Gauge for CIBIL Score
-function CibilSpeedometer({ score = 785 }: { score?: number }) {
-  // Score range: 300 to 900
-  const pct = Math.max(0, Math.min(1, (score - 300) / 600));
-  const angleDeg = -90 + pct * 180; // -90deg (left) to +90deg (right)
-
-  return (
-    <div style={{ textAlign: "center", padding: "10px 0 4px" }}>
-      <svg viewBox="0 0 220 130" width="230" height="135" style={{ margin: "0 auto", overflow: "visible" }}>
-        <defs>
-          <linearGradient id="cibilGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#ef4444" />
-            <stop offset="35%" stopColor="#f59e0b" />
-            <stop offset="70%" stopColor="#eab308" />
-            <stop offset="100%" stopColor="#10b981" />
-          </linearGradient>
-        </defs>
-        {/* Background Track */}
-        <path
-          d="M 20 110 A 90 90 0 0 1 200 110"
-          fill="none"
-          stroke="var(--ln)"
-          strokeWidth="16"
-          strokeLinecap="round"
-        />
-        {/* Colored Speedometer Arc */}
-        <path
-          d="M 20 110 A 90 90 0 0 1 200 110"
-          fill="none"
-          stroke="url(#cibilGrad)"
-          strokeWidth="16"
-          strokeLinecap="round"
-          strokeDasharray="283"
-          strokeDashoffset={283 - 283 * pct}
-          style={{ transition: "stroke-dashoffset 1s ease" }}
-        />
-        {/* Scale Labels */}
-        <text x="12" y="128" fontSize="10" fill="var(--mu)" fontWeight="600">300</text>
-        <text x="102" y="12" fontSize="10" fill="var(--mu)" fontWeight="600">600</text>
-        <text x="192" y="128" fontSize="10" fill="var(--mu)" fontWeight="600">900</text>
-
-        {/* Rotating Speedometer Needle */}
-        <g transform={`translate(110, 110) rotate(${angleDeg})`} style={{ transition: "transform 1s cubic-bezier(.2,1.2,.3,1)" }}>
-          <polygon points="-4,0 0,-76 4,0" fill="var(--tx)" />
-          <circle cx="0" cy="0" r="8" fill="var(--pr)" />
-          <circle cx="0" cy="0" r="3.5" fill="#fff" />
-        </g>
-      </svg>
-      <h1 style={{ fontSize: 40, fontWeight: 800, color: "var(--gr)", margin: "-4px 0 2px", letterSpacing: -1 }}>
-        {score}
-      </h1>
-      <span className="chip on" style={{ background: "var(--gr)", borderColor: "var(--gr)", fontSize: 11.5 }}>
-        EXCELLENT SCORE (Top 12% in India)
-      </span>
-    </div>
-  );
-}
-
-function Sparkline({ seed, up, w = 80, h = 30, big = false }: { seed: string; up: boolean; w?: number; h?: number; big?: boolean }) {
-  let q = 0;
-  for (const c of seed) q += c.charCodeAt(0);
-  let y = h / 2;
-  const pts: string[] = [];
-  for (let i = 0; i < 28; i++) {
-    q = (q * 9301 + 49297) % 233280;
-    y = Math.max(4, Math.min(h - 4, y + (q / 233280 - (up ? 0.42 : 0.58)) * h * 0.3));
-    pts.push((i * w / 27).toFixed(1) + "," + (h - y).toFixed(1));
-  }
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} width={big ? "100%" : w} height={h} preserveAspectRatio="none">
-      <path
-        d={"M" + pts.join("L")}
-        fill="none"
-        stroke={up ? "var(--gr)" : "var(--rd)"}
-        strokeWidth={big ? 2.2 : 1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
-  );
-}
-
-const CAT_COLORS: Record<string, string> = {
-  Food: "#e81a6c",
-  Shopping: "#0f9d58",
-  Bills: "#e08a00",
-  Travel: "#00a6d6",
-  Transfer: "#6739b7",
-  Investment: "#d9480f",
-};
-
-const TELECOM_PLANS: Record<string, { price: number; val: string; data: string; cat: string; desc: string }[]> = {
-  Jio: [
-    { price: 299, val: "28 Days", data: "1.5 GB/day", cat: "Popular", desc: "Unlimited Voice + 100 SMS/day + JioTV" },
-    { price: 349, val: "28 Days", data: "2 GB/day + True 5G", cat: "5G Unlimited", desc: "Hero 5G Plan • Unlimited 5G Data + Calls" },
-    { price: 749, val: "72 Days", data: "2 GB/day + 20GB Extra", cat: "5G Unlimited", desc: "Unlimited True 5G + JioCinema" },
-    { price: 859, val: "84 Days", data: "2 GB/day + True 5G", cat: "5G Unlimited", desc: "Best 84-Day True 5G Unlimited Pack" },
-    { price: 3599, val: "365 Days", data: "2.5 GB/day + True 5G", cat: "Annual", desc: "1 Year Non-Stop True 5G + Calls" },
-    { price: 101, val: "Active Plan", data: "6 GB Booster", cat: "Data Add-on", desc: "True Unlimited 5G Upgrade Booster" },
-  ],
-  Airtel: [
-    { price: 299, val: "28 Days", data: "1 GB/day", cat: "Popular", desc: "Unlimited Calls + 100 SMS/day + Wynk" },
-    { price: 379, val: "1 Month", data: "2 GB/day + 5G", cat: "5G Unlimited", desc: "Unlimited 5G Data + Apollo 24|7 + Xstream" },
-    { price: 859, val: "84 Days", data: "1.5 GB/day", cat: "Popular", desc: "Unlimited Calls + RewardsMini" },
-    { price: 979, val: "84 Days", data: "2 GB/day + 5G", cat: "5G Unlimited", desc: "Unlimited 5G + Airtel Xstream Play Free" },
-    { price: 3599, val: "365 Days", data: "2 GB/day + 5G", cat: "Annual", desc: "365 Days Unlimited 5G + Roaming" },
-    { price: 99, val: "2 Days", data: "Unlimited Data (20GB/day)", cat: "Data Add-on", desc: "Weekend Heavy Data Pack" },
-  ],
-  Vi: [
-    { price: 299, val: "28 Days", data: "1 GB/day", cat: "Popular", desc: "Unlimited Calls + 100 SMS/day" },
-    { price: 365, val: "28 Days", data: "2 GB/day + Hero", cat: "5G Unlimited", desc: "12AM-6AM Binge All Night + Weekend Rollover" },
-    { price: 859, val: "84 Days", data: "1.5 GB/day + Hero", cat: "5G Unlimited", desc: "Binge All Night + Data Delights" },
-    { price: 3499, val: "365 Days", data: "1.5 GB/day", cat: "Annual", desc: "Full Year Validity + Vi Movies & TV" },
-    { price: 139, val: "28 Days", data: "12 GB Data", cat: "Data Add-on", desc: "Work From Home Data Add-on" },
-  ],
-  BSNL: [
-    { price: 153, val: "26 Days", data: "1 GB/day", cat: "Popular", desc: "Unlimited Voice Calls (Local/STD) + 100 SMS" },
-    { price: 197, val: "70 Days", data: "2 GB/day (first 15d)", cat: "Popular", desc: "Best Validity Saver Plan" },
-    { price: 397, val: "150 Days", data: "2 GB/day (first 30d)", cat: "Popular", desc: "5 Months SIM Active Validity Pack" },
-    { price: 599, val: "84 Days", data: "3 GB/day + Night Free", cat: "5G Unlimited", desc: "Work & Study Heavy Data Pack (252 GB)" },
-    { price: 1999, val: "365 Days", data: "600 GB Total", cat: "Annual", desc: "365 Days Unlimited Calls + 600 GB Data" },
-  ],
-};
-
-const STATIONS = [
-  ["BPL", "Bhopal Jn"],
-  ["NGP", "Nagpur Jn"],
-  ["CNB", "Kanpur Central"],
-  ["INDB", "Indore Jn"],
-  ["JP", "Jaipur Jn"],
-  ["UJN", "Ujjain Jn"],
-  ["NDLS", "New Delhi"],
-  ["CSMT", "Mumbai CSMT"],
-];
-
-const IRCTC_TRAINS = [
-  { no: "12622", name: "Tamil Nadu SF Express", dep: "07:00", arr: "12:35", dur: "5h 35m", sl: 295, a3: 755, a2: 1065, avl: "AVL 48" },
-  { no: "12511", name: "Raptisagar SF Express", dep: "11:30", arr: "19:15", dur: "7h 45m", sl: 345, a3: 910, a2: 1290, avl: "AVL 24" },
-  { no: "19302", name: "Dr. Ambedkar Nagar Exp", dep: "16:10", arr: "23:45", dur: "7h 35m", sl: 280, a3: 720, a2: 1020, avl: "AVL 62" },
-  { no: "12967", name: "Jaipur SF Express", dep: "18:20", arr: "06:15", dur: "11h 55m", sl: 390, a3: 1040, a2: 1480, avl: "RAC 11" },
-  { no: "20171", name: "Vande Bharat Express", dep: "05:40", arr: "13:10", dur: "7h 30m", sl: 890, a3: 1465, a2: 2650, avl: "AVL 19" },
-];
-
-const DTH_PACKS: Record<string, { name: string; ch: string; val: string; price: number }[]> = {
-  "Tata Play": [
-    { name: "Hindi Bachat Pack", ch: "185+ Channels", val: "1 Month", price: 249 },
-    { name: "Hindi Super Value HD", ch: "260+ HD/SD Channels", val: "1 Month", price: 365 },
-    { name: "Family Sports & Kids HD", ch: "310+ Channels (Star/Sony HD)", val: "1 Month", price: 485 },
-  ],
-  "Airtel Digital TV": [
-    { name: "Hindi Value Lite SD", ch: "170+ Channels", val: "1 Month", price: 259 },
-    { name: "All-in-One Entertainment HD", ch: "250+ HD Channels", val: "1 Month", price: 379 },
-    { name: "Ultimate Sports HD Pack", ch: "295+ Channels", val: "1 Month", price: 499 },
-  ],
-  "Dish TV": [
-    { name: "Classic Joy Hindi", ch: "190+ Channels", val: "1 Month", price: 229 },
-    { name: "Titanium HD Family", ch: "275+ Channels", val: "1 Month", price: 349 },
-  ],
-  "Sun Direct": [
-    { name: "Cinema + Sports Value", ch: "210+ Channels", val: "1 Month", price: 235 },
-    { name: "Mega HD Bouquet", ch: "280+ HD Channels", val: "1 Month", price: 390 },
-  ],
-};
-
-const INITIAL_CONTACTS = [
-  ["Rahul Sharma", "+91 98765 43210", "rahul@ekapp"],
-  ["Priya Verma", "+91 91234 56780", "priya@ekapp"],
-  ["Mom", "+91 99887 76655", "mom@sbi"],
-  ["Vikram Singh", "+91 98111 22334", "vikram@hdfc"],
-  ["Neha Kapoor", "+91 90909 80808", "neha@icici"],
-  ["Zomato Merchant", "Verified Merchant", "zomato@ekpay"],
-];
-
-const ST = [
-  ["RELIANCE", "Reliance Industries", 2945.3, 1.2],
-  ["TCS", "Tata Consultancy Services", 4120.5, -0.4],
-  ["HDFCBANK", "HDFC Bank", 1688.9, 0.8],
-  ["INFY", "Infosys", 1842.2, -1.1],
-  ["ITC", "ITC Ltd", 468.75, 0.5],
-  ["SBIN", "State Bank of India", 812.4, 1.9],
-  ["TATAMOTORS", "Tata Motors", 1012.6, 2.3],
-  ["ZOMATO", "Zomato", 265.3, 3.1],
-] as const;
-
-const MF = [
-  ["Parag Parikh Flexi Cap", "Flexi Cap • Direct", 22.4, 1000],
-  ["Nippon India Small Cap", "Small Cap • Direct", 31.8, 500],
-  ["SBI Bluechip Fund", "Large Cap • Direct", 15.2, 500],
-  ["HDFC Mid-Cap Opportunities", "Mid Cap • Direct", 26.1, 500],
-] as const;
-
-const CATALOG: Record<string, [string, string, string, number][]> = {
-  insurance: [
-    ["EkCare Health Floater", "₹10L Family Cover • 100% Cashless", "₹612/mo", 612],
-    ["Term Life Shield", "₹1 Crore Cover till age 60", "₹749/mo", 749],
-    ["Zero-Dep Bike Cover", "Instant Policy in 2 mins", "₹1,150/yr", 1150],
-    ["Comprehensive Car Cover", "24x7 Roadside Assistance", "₹4,420/yr", 4420],
-  ],
-  fd: [
-    ["Unity SFB High-Yield FD", "1 Year Lock-in • DICGC Insured", "9.00% p.a.", 5000],
-    ["Shriram Finance FD", "3 Years • Monthly Payout", "8.85% p.a.", 5000],
-    ["Bajaj Finance Digital FD", "2 Years • AAA Rated", "7.80% p.a.", 5000],
-    ["SBI Tax Saver FD", "5 Years • Sec 80C Benefit", "6.80% p.a.", 5000],
-  ],
-  ipo: [
-    ["Nova Solar Energy IPO", "Lot: 27 shares • ₹520–548", "Bid ₹14,796", 14796],
-    ["FinEdge Tech IPO", "Lot: 67 shares • ₹210–222", "Bid ₹14,874", 14874],
-    ["BharatMed Labs IPO", "Lot: 30 shares • Opens Tomorrow", "Pre-Apply ₹12,500", 12500],
-  ],
-  nps: [
-    ["NPS Tier-1 Retirement", "Extra ₹50,000 Tax Saving u/s 80CCD", "12.4% avg", 1000],
-    ["Public Provident Fund (PPF)", "Tax-Free Sovereign Guarantee", "7.1% p.a.", 500],
-    ["Atal Pension Yojana", "₹5,000/mo Guaranteed Pension", "₹210/mo", 210],
-  ],
-};
-
-const SCREEN_TITLES: Record<string, string> = {
-  notif: "Notifications",
-  txns: "Passbook & History",
-  txn: "Transaction Receipt",
-  pay: "Send Money",
-  amt: "Enter Amount",
-  scan: "EkPay QR Scanner",
-  done: "Payment Status",
-  invest: "Wealth & Portfolio",
-  stocks: "NSE Stocks",
-  sip: "Mutual Funds & SIP",
-  gold: "24K Digital Gold",
-  loans: "Instant Loans & EMI",
-  cards: "Credit Cards",
-  mobile: "Mobile Prepaid Recharge",
-  train: "IRCTC Train Tickets",
-  dth: "DTH & Cable TV Recharge",
-  electricity: "Electricity Bill Pay",
-  fastag: "NHAI FASTag Recharge",
-  gas: "Book LPG Gas Cylinder",
-  split: "Split Group Bill",
-  cibil: "Credit Score (CIBIL)",
-  analytics: "Budget & Analytics",
-  profile: "My EkPay Profile & QR",
-  more: "App & Security Settings",
-  autopay: "Subscriptions & Autopay",
-  upilite: "UPI Lite (Pin-less)",
-  insurance: "Insurance Plans",
-  fd: "Fixed Deposits",
-  ipo: "IPO Center",
-  nps: "Pension & Tax Saver",
-  addbank: "Link Bank Account (NPCI)",
-  collect: "Collect Money & Requests",
-  complaints: "UPI Disputes & Tickets",
-  forgotpin: "Reset Forgot UPI PIN",
-};
-
-// The 4 Root Bottom Tabs where Back Button should NOT appear
-const ROOT_TABS = new Set(["home", "txns", "invest", "more"]);
-
-type ThemePref = "light" | "dark" | "system";
-const PREFS_KEY = "ek_prefs";
-
-/** Server ko bheja jaane wala settings payload (PATCH /api/settings). Key order fixed => compare reliable. */
-const settingsPayload = (theme: ThemePref, soundOn: boolean, hideBalance: boolean, intlUpi: boolean, payAlerts: boolean) => ({
-  theme, soundOn, hideBalance, intlUpi, payAlerts,
-});
+import { inr, fmtWhen, mapServerTxn } from "@/lib/format";
+import { Icon } from "@/components/Icon";
+import { BrandLogo } from "@/components/BrandLogo";
+import { CibilSpeedometer } from "@/components/CibilSpeedometer";
+import { Sparkline } from "@/components/Sparkline";
+import {
+  CAT_COLORS,
+  TELECOM_PLANS,
+  IRCTC_TRAINS,
+  INITIAL_CONTACTS,
+  CATALOG,
+  SCREEN_TITLES,
+  ROOT_TABS,
+  PREFS_KEY,
+  settingsPayload,
+  STATIONS,
+  DTH_PACKS,
+  ST,
+  MF,
+  type ThemePref,
+} from "@/lib/constants";
 
 export default function EkAppFullStack() {
   const [showSplash, setShowSplash] = useState(true);
@@ -2391,7 +1943,7 @@ export default function EkAppFullStack() {
                     });
                     const d = await r.json();
                     if (r.ok) {
-                      setUserPin(resetNewPin);
+                      /* setUserPin removed — PIN server pe reset hoti hai */
                       setResetPass("");
                       setResetNewPin("");
                       showToast("UPI PIN Reset Successfully!");
@@ -3511,7 +3063,6 @@ export default function EkAppFullStack() {
                     const [nextBank, ...rest] = balCheckModal.queue;
                     setBalPinError("");
                     setBalPinError("");
-                    setBalPinError("");
                     setBalCheckModal({
                       id: nextBank.id,
                       label: nextBank.label,
@@ -3521,13 +3072,13 @@ export default function EkAppFullStack() {
                       totalSteps: balCheckModal.totalSteps,
                     });
                   } else if (balCheckModal.totalSteps) {
-                    setHeroBalMode("visible");
+                    setHeroBalMode("total");
                     setHeroSingleBankId(null);
                     setBalCheckModal(null);
                     setBalPinError("");
                   } else {
                     setHeroSingleBankId(null);
-                    setHeroBalMode("visible"); // unlocked banks ka sum dikhao
+                    setHeroBalMode("total"); // unlocked banks ka sum dikhao
                     setBalCheckModal(null);
                     setBalPinError("");
                   }
