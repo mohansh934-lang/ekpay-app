@@ -11,7 +11,7 @@ Next.js (App Router) · TypeScript · SQLite (`node:sqlite`) · scrypt · koi ex
 # Node 22.13+ chahiye
 npm install
 npm run dev        # http://localhost:3000
-npm test           # 37 backend tests
+npm test           # backend tests
 ```
 Production me `.env.example` dekho (`EK_PEPPER` zaroori hai).
 
@@ -71,7 +71,7 @@ Error codes jo frontend ko handle karne chahiye: `INVALID_PIN` (`remainingAttemp
 
 ## UPI Hub upgrade (simulator)
 
-Naye features (sab `/upi` page par, backend `/api/*`):
+Naye features (sab main app me, backend `/api/*`):
 
 | Feature | Endpoint |
 |---|---|
