@@ -29,3 +29,5 @@ export { CardsScreen } from "./CardsScreen";
 export { SplitScreen } from "./SplitScreen";
 export { CibilScreen } from "./CibilScreen";
 export { AnalyticsScreen } from "./AnalyticsScreen";
+export { TxnScreen } from "./TxnScreen";
+export { StkScreen } from "./StkScreen";
