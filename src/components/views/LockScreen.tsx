@@ -14,11 +14,6 @@ export function LockScreen() {
 
   return (
     <>
-      <div id="stb">
-        <span>9:41</span>
-        <div className="notch"></div>
-        <span>5G • 100%</span>
-      </div>
       <div style={{ padding: "48px 20px 20px", textAlign: "center" }}>
         <div style={{ width: 64, height: 64, borderRadius: 20, background: "var(--pr)", color: "#fff", display: "grid", placeItems: "center", fontSize: 30, fontWeight: 700, margin: "0 auto 12px" }}>
           E
@@ -59,7 +54,6 @@ export function LockScreen() {
           🔓 Instant Biometric Unlock
         </button>
       </div>
-      <div id="hbar"></div>
     </>
   );
 }

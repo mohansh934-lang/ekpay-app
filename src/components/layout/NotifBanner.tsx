@@ -15,7 +15,7 @@ export function NotifBanner() {
     <div
       onClick={() => { setBanner(null); go("notif"); }}
       style={{
-        position: "absolute", left: 10, right: 10, top: 34, background: "var(--cd)",
+        position: "absolute", left: 10, right: 10, top: 10, background: "var(--cd)",
         border: "1px solid var(--ln)", boxShadow: "0 10px 30px rgba(15,23,42,.25)",
         borderRadius: 15, padding: "10px 12px", display: "flex", gap: 10,
         alignItems: "center", zIndex: 45, cursor: "pointer"

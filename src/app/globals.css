@@ -14,14 +14,14 @@ svg{display:block}
 .ib{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;position:relative;color:var(--tx)}
 .ib b{position:absolute;top:2px;right:1px;background:var(--rd);color:#fff;font-size:9px;min-width:15px;height:15px;border-radius:8px;display:grid;place-items:center;font-weight:600}
 .sb2{flex:1;display:flex;align-items:center;gap:7px;background:var(--cd);border:1px solid var(--ln);border-radius:20px;padding:8px 12px;color:var(--mu);font-weight:400;font-size:12.5px}
-#mn{position:absolute;inset:80px 0 64px;overflow-y:auto;padding:4px 14px 24px;scrollbar-width:none}
+#mn{position:absolute;inset:48px 0 64px;overflow-y:auto;padding:4px 14px 24px;scrollbar-width:none}
 #mn::-webkit-scrollbar{display:none}
 .sl{animation:sl .24s cubic-bezier(.2,.8,.2,1)}
 @keyframes sl{from{opacity:0;transform:translateX(18px)}}
 nav{position:absolute;left:0;right:0;bottom:0;height:64px;background:var(--cd);border-top:1px solid var(--ln);display:flex;z-index:5;padding-bottom:6px}
 nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:500;color:var(--mu)}
 nav .on{color:var(--pr);font-weight:600}
-nav .pay span{width:44px;height:44px;border-radius:50%;background:var(--pr);color:#fff;display:grid;place-items:center;margin-top:-20px;box-shadow:0 6px 16px rgba(232,26,108,.45);border:4px solid var(--bg)}
+nav .pay span{width:52px;height:52px;border-radius:50%;background:var(--pr);color:#fff;display:grid;place-items:center;margin-top:-26px;box-shadow:0 6px 16px rgba(232,26,108,.45);border:4px solid var(--bg)}
 .hero{background:var(--hero);color:#fff;border-radius:18px;padding:15px;position:relative;overflow:hidden;margin:4px 0 14px}
 .hero:before{content:"";position:absolute;right:-60px;top:-80px;width:210px;height:210px;border-radius:50%;border:30px solid rgba(255,255,255,.05)}
 .hero small{color:rgba(255,255,255,.7);font-size:11.5px}.hero h1{font-size:28px;font-weight:600;margin:4px 0 12px;letter-spacing:-.8px}

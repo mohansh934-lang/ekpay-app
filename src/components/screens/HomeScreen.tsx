@@ -112,7 +112,6 @@ export function HomeScreen() {
         </div>
       </div>
       <div className="qa">
-        <button onClick={() => go("scan")}><span className="it"><Icon n="scan" /></span>Scan QR</button>
         <button onClick={() => go("pay")}><span className="it"><Icon n="up" /></span>To Contact</button>
         <button onClick={() => { setNumInput(""); setNumModal("mobile"); }}><span className="it"><Icon n="phone" /></span>To Mobile/ID</button>
         <button onClick={() => setNumModal("self")}><span className="it"><Icon n="bank" /></span>Self Transfer</button>

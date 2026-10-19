@@ -51,11 +51,6 @@ export function MainApp() {
     <>
       {banner && <NotifBanner />}
 
-      <div id="stb">
-        <span>9:41</span>
-        <div className="notch"></div>
-        <span>5G • 100%</span>
-      </div>
 
       {/* HEADER: NO BACK BUTTON ON THE 4 ROOT TABS, WORKING BACK BUTTON ON ALL INNER SCREENS! */}
       <AppHeader />
@@ -145,7 +140,6 @@ export function MainApp() {
       </div>
 
       <BottomNav />
-      <div id="hbar"></div>
     </>
   );
 }
