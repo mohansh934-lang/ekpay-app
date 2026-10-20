@@ -265,3 +265,13 @@ img,svg,video,canvas{max-width:100%}
   }
   #toast{max-width:min(calc(90vw / var(--ek-z,1)),340px) !important}
 }
+
+/* EK-CHAT-CSS: chat screen apna header/bottom bar khud banata hai */
+#mn.chatmode{inset:0 !important;padding:0 !important;overflow:hidden !important}
+
+/* EK-PINPAGE-CSS: full-screen UPI PIN page (88% limit hatayi, keypad neeche, boxes keypad ke paas) */
+#sh .sb.pinpage{max-height:none !important;height:100% !important;border-radius:0 !important;overflow-y:auto !important;padding:calc(16px + var(--sat,0px)) 16px calc(18px + var(--sab,0px)) !important}
+.pinpage .kp{margin:6px auto 0;width:100%;max-width:320px}
+.pinpage .kp button{padding:15px 0;font-size:22px}
+.pinpage .kp button.btn{margin:0 6px;padding:14px 0;font-size:15px;align-self:center;width:auto;border-radius:999px}
+@media (max-height:620px){.pinpage .kp button{padding:10px 0;font-size:20px}}

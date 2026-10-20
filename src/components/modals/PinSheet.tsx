@@ -1,8 +1,9 @@
 "use client";
 
-import { inr } from "@/lib/format";
 import { useEk } from "@/context/EkContext";
+import { PinPage } from "@/components/modals/PinPage";
 
+/** Payment ka UPI PIN page: balance-check wale page jaisa hi (PinPage). 4 digit poore hote hi payment chal jaati hai. */
 export function PinSheet() {
   const {
     payBusy,
@@ -16,28 +17,25 @@ export function PinSheet() {
     payBankIdx,
     setPinSheet,
     pin,
+    setPin,
     handlePinKey,
   } = useEk();
 
+  const amountText = "₹" + Number(payAmt || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
   return (
-    <div id="sh">
-      <div className="sb" style={{ textAlign: "center" }}>
-        <small>Paying {contacts[payToIdx][0]}</small>
-        <h2 style={{ margin: "4px 0" }}>{inr(Number(payAmt))}</h2>
-        <small>{banks[payBankIdx][0]} • EkPay Secure UPI</small>
-        <div className="dots">
-          {[0, 1, 2, 3].map((i) => (
-            <i key={i} className={i < pin.length ? "f" : ""}></i>
-          ))}
-        </div>
-        {pinErr ? <small style={{ color: "var(--rd)" }}>{pinErr}</small> : <small>{payBusy ? "Verifying…" : "Enter 4-digit EkPay UPI PIN"}</small>}
-        <div className="kp">
-          {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"].map((k) => (
-            <button key={k} onClick={() => handlePinKey(k)}>{k}</button>
-          ))}
-        </div>
-        <button className="btn o" onClick={() => { setPinSheet(false); setPinErr(""); payKey.current = ""; }}>Cancel</button>
-      </div>
-    </div>
+    <PinPage
+      pin={pin}
+      error={pinErr}
+      message={payBusy ? "Verifying…" : ""}
+      keys={["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"]}
+      onKey={handlePinKey}
+      onClose={() => { setPinSheet(false); setPinErr(""); setPin(""); payKey.current = ""; }}
+    >
+      <small className="mu">Paying {contacts[payToIdx]?.[0]}</small>
+      <h1 style={{ fontSize: 36, fontWeight: 600, letterSpacing: -1, margin: "4px 0" }}>{amountText}</h1>
+      <small className="mu">{banks[payBankIdx]?.[0]} • EkPay Secure UPI</small>
+      <b style={{ display: "block", fontSize: 17, marginTop: 18 }}>Enter UPI PIN</b>
+    </PinPage>
   );
 }

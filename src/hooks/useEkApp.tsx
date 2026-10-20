@@ -229,7 +229,7 @@ export function useEkApp() {
   const [toast, setToast] = useState("");
   const [chartRange, setChartRange] = useState("1M");
 
-  const [numModal, setNumModal] = useState<null | "mobile" | "bank" | "self" | "changepin" | "confirmpin">(null);
+  const [numModal, setNumModal] = useState<null | "mobile" | "upi" | "bank" | "self" | "changepin" | "confirmpin">(null);
   const [numInput, setNumInput] = useState("");
   const [selfFrom, setSelfFrom] = useState(0);
   const [selfTo, setSelfTo] = useState(1);
@@ -308,7 +308,12 @@ export function useEkApp() {
   // EK-ZOOM-FIX: screen ki width/height ke hisab se UI scale (kam se kam 1x, zyada se zyada 1.7x, kuch cut nahi hoga)
   useEffect(() => {
     const BASE_W = 376, BASE_H = 680, MAX = 1.7;
+    let lastW = 0; // EK-ZOOM-KB
     const apply = () => {
+      const el = document.activeElement;
+      const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT");
+      if (typing && lastW && Math.abs(window.innerWidth - lastW) < 2) return; // keyboard khula: scale mat badlo
+      lastW = window.innerWidth;
       const z = Math.max(1, Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H, MAX));
       document.documentElement.style.setProperty("--ek-z", z.toFixed(2));
     };
@@ -618,6 +623,7 @@ export function useEkApp() {
     const r = await apiCall("POST", "/api/payments", {
       amount: a,
       receiver: contacts[payToIdx][0].slice(0, 80),
+      vpa: /^[a-zA-Z0-9.\-_]{2,64}@[a-zA-Z]{2,32}$/.test(String(contacts[payToIdx][2] || "")) ? String(contacts[payToIdx][2]).toLowerCase() : undefined,
       pin: next,
       note: payNote ? payNote.slice(0, 100) : undefined,
       category: isBill ? "Bills" : "Transfer",

@@ -16,8 +16,8 @@ export function PayScreen() {
   return (
     <>
       <div className="qa" style={{ marginBottom: 10 }}>
-        <button onClick={() => go("scan")}><span className="it"><Icon n="scan" /></span>Scan QR</button>
-        <button onClick={() => { setNumInput(""); setNumModal("mobile"); }}><span className="it"><Icon n="phone" /></span>Mobile/UPI</button>
+        <button onClick={() => { setNumInput(""); setNumModal("mobile"); }}><span className="it"><Icon n="phone" /></span>Mobile</button>
+        <button onClick={() => { setNumInput(""); setNumModal("upi"); }}><span className="it"><Icon n="at" /></span>UPI ID</button>
         <button onClick={() => { setNumInput(""); setNumModal("bank"); }}><span className="it"><Icon n="bank" /></span>Bank A/C</button>
         <button onClick={() => setNumModal("self")}><span className="it"><Icon n="up" /></span>Self Xfer</button>
       </div>
@@ -30,7 +30,7 @@ export function PayScreen() {
             onClick={() => {
               setPayToIdx(i);
               setPayAmt("");
-              go("amt");
+              go("chat");
             }}
           >
             <span className="av" style={{ background: "#fce7f0", color: "#9d1048" }}>{c[0][0]}</span>

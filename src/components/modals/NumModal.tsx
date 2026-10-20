@@ -27,12 +27,43 @@ export function NumModal() {
     setPayAmt,
     showToast,
     go,
+    me,
     newKey,
     apiCall,
     act,
     payDone,
   } = useEk();
   if (!numModal) return null;
+
+  // EK-CHAT-SCREEN: mobile / UPI ID dalne ke baad chat-style pay screen kholo
+  const VPA_RE = /^[a-zA-Z0-9.\-_]{2,64}@[a-zA-Z]{2,32}$/;
+  const goChat = () => {
+    const val = numInput.trim();
+    let idx = -1;
+    let newC: string[] | null = null;
+    if (numModal === "mobile") {
+      if (!/^[6-9]\d{9}$/.test(val)) return showToast("Valid 10-digit mobile number daalo");
+      if (me && val === me.phone) return showToast("Khud ko paisa nahi bhej sakte");
+      idx = contacts.findIndex((c) => c[1].replace(/\D/g, "").slice(-10) === val);
+      if (idx < 0) newC = ["+91 " + val.slice(0, 5) + " " + val.slice(5), "Mobile Number", val + "@ekpay"];
+    } else {
+      const vpa = val.toLowerCase();
+      if (!VPA_RE.test(vpa)) return showToast("UPI ID valid nahi hai (jaise name@bank)");
+      if (me && vpa === me.upiId.toLowerCase()) return showToast("Khud ko paisa nahi bhej sakte");
+      idx = contacts.findIndex((c) => c[2].toLowerCase() === vpa);
+      if (idx < 0) newC = [vpa, "UPI ID", vpa];
+    }
+    if (newC) {
+      setContacts([newC, ...contacts]);
+      idx = 0;
+    }
+    setPayToIdx(idx);
+    setPayAmt("");
+    setNumInput("");
+    setNumModal(null);
+    go("chat");
+  };
+
 
   return (
     <div id="sh">
@@ -135,11 +166,47 @@ export function NumModal() {
             </button>
             <button className="btn o" onClick={() => setNumModal(null)}>Cancel</button>
           </>
+        ) : numModal === "mobile" || numModal === "upi" ? (
+          <>
+            <b style={{ fontSize: 16 }}>{numModal === "mobile" ? "Pay to Mobile Number" : "Pay to UPI ID"}</b>
+            <p className="mu">{numModal === "mobile" ? "10-digit mobile number daalo" : "UPI ID daalo (jaise name@bank)"}</p>
+            {numModal === "mobile" ? (
+              <input
+                key="mob"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="off"
+                autoFocus
+                maxLength={10}
+                placeholder="10-digit mobile number"
+                value={numInput}
+                onChange={(e) => setNumInput(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                onKeyDown={(e) => { if (e.key === "Enter") goChat(); }}
+              />
+            ) : (
+              <input
+                key="upi"
+                type="text"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                autoComplete="off"
+                autoFocus
+                placeholder="name@bank"
+                value={numInput}
+                onChange={(e) => setNumInput(e.target.value.replace(/\s/g, ""))}
+                onKeyDown={(e) => { if (e.key === "Enter") goChat(); }}
+              />
+            )}
+            <button className="btn" onClick={goChat}>Continue</button>
+            <button className="btn o" onClick={() => { setNumModal(null); setNumInput(""); }}>Cancel</button>
+          </>
         ) : (
           <>
-            <b style={{ fontSize: 16 }}>{numModal === "mobile" ? "Pay to Mobile / UPI ID" : "Pay to Bank Account"}</b>
+            <b style={{ fontSize: 16 }}>Pay to Bank Account</b>
             <input
-              placeholder={numModal === "mobile" ? "10-digit mobile or name@ekapp" : "Account Number / IFSC"}
+              placeholder="Account Number / IFSC"
               value={numInput}
               onChange={(e) => setNumInput(e.target.value)}
             />
@@ -147,7 +214,7 @@ export function NumModal() {
               className="btn"
               onClick={() => {
                 if (numInput.trim().length < 5) return showToast("Sahi details daalo");
-                const newC = [numInput.trim(), numModal === "mobile" ? "EkPay Verified" : "Bank Transfer", numInput.trim().includes("@") ? numInput.trim() : numInput.trim() + "@ekapp"];
+                const newC = [numInput.trim(), "Bank Transfer", numInput.trim().includes("@") ? numInput.trim() : numInput.trim() + "@ekapp"];
                 setContacts([newC, ...contacts]);
                 setPayToIdx(0);
                 setPayAmt("");

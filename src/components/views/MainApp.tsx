@@ -21,6 +21,7 @@ import { NotifScreen } from "@/components/screens/NotifScreen";
 import { CatScreen } from "@/components/screens/CatScreen";
 import { ScanScreen } from "@/components/screens/ScanScreen";
 import { PayScreen } from "@/components/screens/PayScreen";
+import { ChatScreen } from "@/components/screens/ChatScreen";
 import { AmtScreen } from "@/components/screens/AmtScreen";
 import { DoneScreen } from "@/components/screens/DoneScreen";
 import { TxnsScreen } from "@/components/screens/TxnsScreen";
@@ -53,9 +54,9 @@ export function MainApp() {
 
 
       {/* HEADER: NO BACK BUTTON ON THE 4 ROOT TABS, WORKING BACK BUTTON ON ALL INNER SCREENS! */}
-      <AppHeader />
+      {baseView !== "chat" && <AppHeader />}
 
-      <div id="mn" className="sl">
+      <div id="mn" className={baseView === "chat" ? "sl chatmode" : "sl"}>
         {/* ================= HOME TAB ================= */}
         {baseView === "home" && <HomeScreen />}
 
@@ -115,6 +116,8 @@ export function MainApp() {
 
         {baseView === "pay" && <PayScreen />}
 
+        {baseView === "chat" && <ChatScreen />}
+
         {baseView === "amt" && <AmtScreen />}
 
         {baseView === "done" && txns[0] && <DoneScreen />}
@@ -139,7 +142,7 @@ export function MainApp() {
         {baseView === "analytics" && <AnalyticsScreen />}
       </div>
 
-      <BottomNav />
+      {baseView !== "chat" && <BottomNav />}
     </>
   );
 }
