@@ -295,18 +295,22 @@ export function useEkApp() {
       const barColor = resolved === "dark" ? "#12050a" : "#fdf5f8";
       root.style.background = barColor;
       document.body.style.background = barColor;
-      document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove());
-      const meta = document.createElement("meta");
-      meta.name = "theme-color";
-      meta.content = barColor;
-      document.head.appendChild(meta);
-      let apple = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement | null;
-      if (!apple) {
-        apple = document.createElement("meta");
-        apple.name = "apple-mobile-web-app-status-bar-style";
-        document.head.appendChild(apple);
+
+      // Safely update meta tags without destroying Next.js-managed DOM elements
+      let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+      if (meta) {
+        meta.content = barColor;
+      } else {
+        meta = document.createElement("meta");
+        meta.name = "theme-color";
+        meta.content = barColor;
+        document.head.appendChild(meta);
       }
-      apple.content = resolved === "dark" ? "black-translucent" : "default";
+
+      const apple = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement | null;
+      if (apple) {
+        apple.content = resolved === "dark" ? "black-translucent" : "default";
+      }
     };
     apply();
     if (theme !== "system") return;
@@ -315,18 +319,27 @@ export function useEkApp() {
   }, [theme]);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setSplashFade(true), 1250);
-    const t2 = setTimeout(() => setShowSplash(false), 1700);
+    const t1 = setTimeout(() => setSplashFade(true), 1100);
+    const t2 = setTimeout(() => setShowSplash(false), 1500);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
   }, []);
 
-  // Service Worker register karo (PWA install prompt + offline support)
+  // Development safe: unregister any stale service workers and clear cache storage
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    if (typeof window !== "undefined") {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          for (const reg of regs) reg.unregister();
+        }).catch(() => {});
+      }
+      if ("caches" in window) {
+        caches.keys().then((keys) => {
+          for (const key of keys) caches.delete(key);
+        }).catch(() => {});
+      }
     }
   }, []);
 
