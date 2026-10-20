@@ -13,13 +13,12 @@ const normalize = (raw: string): string =>
     .replace(/[^a-z0-9+]+/g, " ")
     .trim();
 
-// Itne chhote / aam naam sirf POORE naam se match hote hain ("Vi" haan, "Vikram Singh" nahi, "Bob Marley" nahi)
 const EXACT_ONLY = new Set(["vi", "bob", "ola"]);
 
 const ENTRIES = Object.keys(LOGOS)
   .map((k) => ({ key: normalize(k), src: LOGOS[k] }))
   .filter((e) => e.key)
-  .sort((a, b) => b.key.length - a.key.length); // lamba naam pehle: "hdfc bank" > "hdfc"
+  .sort((a, b) => b.key.length - a.key.length);
 
 function findLogo(raw: string): string | null {
   const clean = normalize(raw);
@@ -103,6 +102,75 @@ export function BrandLogo({
           onError={() => setFailedSrc(src)}
         />
       </span>
+    );
+  }
+
+  // Smart fallbacks: IRCTC / train, Gold, Self Deposit (no more "I1" / "2D")
+  const low = (name || "").toLowerCase();
+  const iconWrap = (bg: string, svg: React.ReactNode) => (
+    <span
+      className={className}
+      title={name}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: radius,
+        background: bg,
+        color: "#ffffff",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+      }}
+    >
+      {svg}
+    </span>
+  );
+  const iconSize = Math.round(size * 0.55);
+
+  // IRCTC / train → train logo
+  if (low.includes("irctc") || /\btrain\b/.test(low) || /#\d{3,}/.test(name)) {
+    return iconWrap(
+      "linear-gradient(135deg, #003366, #001a33)",
+      <svg viewBox="0 0 24 24" width={iconSize} height={iconSize} fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="3" width="14" height="14" rx="3" />
+        <path d="M5 11h14M8 21l2-4M16 21l-2-4" />
+        <circle cx="9" cy="14" r="1.2" fill="#fff" stroke="none" />
+        <circle cx="15" cy="14" r="1.2" fill="#fff" stroke="none" />
+      </svg>
+    );
+  }
+
+  // 24K Digital Gold → gold coin
+  if (low.includes("gold") || low.includes("24k")) {
+    return iconWrap(
+      "linear-gradient(135deg, #f59e0b, #b45309)",
+      <svg viewBox="0 0 24 24" width={iconSize} height={iconSize} fill="none">
+        <circle cx="12" cy="12" r="9" fill="#fbbf24" stroke="#92400e" strokeWidth="1.5" />
+        <circle cx="12" cy="12" r="6.5" fill="none" stroke="#b45309" strokeWidth="1.2" />
+        <text x="12" y="15.5" textAnchor="middle" fill="#78350f" fontSize="9" fontWeight="800" fontFamily="Inter,sans-serif">₹</text>
+      </svg>
+    );
+  }
+
+  // Self Deposit / Top-up → neeche tircha teer
+  if (low.includes("self deposit") || low.includes("top-up") || low.includes("topup") || low.includes("add money")) {
+    return iconWrap(
+      "linear-gradient(135deg, #059669, #065f46)",
+      <svg viewBox="0 0 24 24" width={iconSize} height={iconSize} fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 5v14M6 13l6 6 6-6" />
+      </svg>
+    );
+  }
+
+  // Self Transfer
+  if (low.includes("self transfer") || /^to\s/.test(low) || /^from\s/.test(low)) {
+    return iconWrap(
+      "linear-gradient(135deg, #2563eb, #1e40af)",
+      <svg viewBox="0 0 24 24" width={iconSize} height={iconSize} fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7 7h10M17 7l-3-3M17 7l-3 3M17 17H7M7 17l3-3M7 17l3 3" />
+      </svg>
     );
   }
 

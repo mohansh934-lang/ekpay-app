@@ -283,12 +283,28 @@ export function useEkApp() {
     }
   }, [prefsReady, theme, soundOn, hideBal, intlUpi, payAlerts]);
 
-  // Theme lagao. "System" me phone ki dark/light setting follow hoti hai.
+  // Theme lagao. Status bar bhi theme ke saath change hoti hai.
   useEffect(() => {
     const root = document.documentElement;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
-      root.dataset.theme = theme === "system" ? (mq.matches ? "dark" : "light") : theme;
+      const resolved = theme === "system" ? (mq.matches ? "dark" : "light") : theme;
+      root.dataset.theme = resolved;
+      const barColor = resolved === "dark" ? "#12050a" : "#fdf5f8";
+      let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.name = "theme-color";
+        document.head.appendChild(meta);
+      }
+      meta.content = barColor;
+      let apple = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement | null;
+      if (!apple) {
+        apple = document.createElement("meta");
+        apple.name = "apple-mobile-web-app-status-bar-style";
+        document.head.appendChild(apple);
+      }
+      apple.content = resolved === "dark" ? "black-translucent" : "default";
     };
     apply();
     if (theme !== "system") return;
@@ -748,7 +764,12 @@ export function useEkApp() {
 
   const [baseView, subParam] = view.split(":");
   const isRootTab = ROOT_TABS.has(view);
-  const headerTitle = baseView === "stk" ? subParam : (SCREEN_TITLES[subParam || baseView] || (subParam || baseView));
+  // Numeric subParam (txn:0, txn:1...) title me mat dikhao
+  const titleKey = subParam && !/^\d+$/.test(subParam) ? subParam : baseView;
+  const headerTitle =
+    baseView === "stk"
+      ? subParam
+      : SCREEN_TITLES[titleKey] || SCREEN_TITLES[baseView] || titleKey;
 
   return {
     showSplash,

@@ -63,7 +63,7 @@ export function BalSheet() {
             });
           }}
         >
-          🔐 Check Total Balance (Verify All {getLiveBanks().length} Banks)
+          Check Total Balance (Verify All {getLiveBanks().length} Banks)
         </button>
       </div>
     </div>

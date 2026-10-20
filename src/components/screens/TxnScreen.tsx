@@ -38,11 +38,11 @@ export function TxnScreen() {
         <div className="row"><small className="m">UTR / Ref ID</small><b style={{ fontSize: 13 }}>{t.ref}</b></div>
       </div>
       <div style={{ display: "flex", gap: 8 }}>
-        <button className="btn" onClick={() => downloadReceipt(t)}>📄 Download Receipt</button>
-        <button className="btn o" onClick={() => go("split")}>👥 Split Bill</button>
+        <button className="btn" onClick={() => downloadReceipt(t)}>Download Receipt</button>
+        <button className="btn o" onClick={() => go("split")}>Split Bill</button>
       </div>
       <div className="c p" style={{ marginTop: 12 }}>
-        <b>🛡️ Have an issue with this transaction?</b>
+        <b>Have an issue with this transaction?</b>
         <small style={{ display: "block", marginBottom: 8 }}>Raise an official NPCI / EkPay dispute ticket</small>
         <select value={compCat} onChange={(e) => setCompCat(e.target.value)} style={{ marginBottom: 8 }}>
           <option value="debited_not_received">Amount debited but not received by payee</option>
