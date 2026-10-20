@@ -111,11 +111,11 @@ export function HomeScreen() {
         </div>
       </div>
       <div className="qa">
-        <button onClick={() => go("pay")}><span className="it"><Icon n="up" /></span>To Contact</button>
+        <button onClick={() => go("pay")}><span className="it"><Icon n="phone" /></span>To Pay</button>
         <button onClick={() => setNumModal("self")}><span className="it"><Icon n="bank" /></span>Self Transfer</button>
         <button onClick={() => { searchNpciBanks(""); go("addbank"); }}><span className="it"><Icon n="plus" /></span>Link Bank</button>
         <button onClick={() => { loadCollectAndComplaints(); go("collect"); }}>
-          <span className="it"><Icon n="user" /></span>
+          <span className="it"><Icon n="collect" /></span>
           Collect Money{collectList.incoming.filter((x) => x.status === "pending").length > 0 ? ` (${collectList.incoming.filter((x) => x.status === "pending").length})` : ""}
         </button>
       </div>
@@ -136,7 +136,7 @@ export function HomeScreen() {
           ["DTH / TV", "tv", "bill:dth"],
           ["LPG Gas", "flame", "bill:gas"],
           ["Train IRCTC", "train", "bill:train"],
-          ["Split Bill", "user", "split"],
+          ["Split Bill", "split", "split"],
           ["Autopay", "rec", "autopay"],
         ].map(([lbl, icn, rt]) => (
           <button key={lbl} onClick={() => go(rt)}>

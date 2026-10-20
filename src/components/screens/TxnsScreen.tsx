@@ -36,8 +36,8 @@ export function TxnsScreen() {
       <div className="chips">
         {[
           ["All", "All"],
-          ["in", "Received (+)"],
-          ["out", "Paid (−)"],
+          ["in", "Received"],
+          ["out", "Paid"],
           ["Food", "Food"],
           ["Bills", "Bills"],
           ["Shopping", "Shopping"],

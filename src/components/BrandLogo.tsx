@@ -105,6 +105,29 @@ export function BrandLogo({ brand, size = 42 }: { brand: string; size?: number }
     );
   }
 
+  // EK-SPOTIFY-YT: Spotify + YouTube logos
+  if (b.includes("spotify")) {
+    return (
+      <svg viewBox="0 0 100 100" width={size} height={size} style={{ flex: "none", borderRadius: 11, boxShadow: "0 2px 6px rgba(0,0,0,.15)" }}>
+        <rect width="100" height="100" rx="22" fill="#121212" />
+        <circle cx="50" cy="50" r="34" fill="#1ed760" />
+        <path d="M27 38Q51 30 75 42" fill="none" stroke="#121212" strokeWidth="6.5" strokeLinecap="round" />
+        <path d="M30 52Q51 45 71 55" fill="none" stroke="#121212" strokeWidth="5.2" strokeLinecap="round" />
+        <path d="M34 65Q51 60 66 67" fill="none" stroke="#121212" strokeWidth="4" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (b.includes("youtube")) {
+    return (
+      <svg viewBox="0 0 100 100" width={size} height={size} style={{ flex: "none", borderRadius: 11, boxShadow: "0 2px 6px rgba(0,0,0,.15)" }}>
+        <rect width="100" height="100" rx="22" fill="#fff" />
+        <rect x="12" y="27" width="76" height="46" rx="14" fill="#ff0000" />
+        <polygon points="43,38 43,62 64,50" fill="#fff" />
+      </svg>
+    );
+  }
+
   let bg = "#e81a6c", fg = "#fff", txt = brand.slice(0, 2).toUpperCase();
   if (b.includes("jio")) { bg = "#0a2885"; txt = "Jio"; }
   else if (b.includes("airtel")) { bg = "#e40000"; txt = "airtel"; }

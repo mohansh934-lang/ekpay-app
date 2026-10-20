@@ -326,6 +326,33 @@ export function useEkApp() {
     };
   }, []);
 
+  // EK-KEYBOARD-NAV: keyboard khulte hi bottom nav chhupao (CSS :has purane mobile browsers me nahi chalta)
+  useEffect(() => {
+    const root = document.documentElement;
+    let maxH = window.visualViewport?.height ?? window.innerHeight;
+    const isField = (el: Element | null) => !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT");
+    const update = () => {
+      const h = window.visualViewport?.height ?? window.innerHeight;
+      if (h > maxH) maxH = h;
+      const shrunk = maxH - h > 120; // keyboard ne screen chhoti ki
+      root.classList.toggle("ek-typing", isField(document.activeElement) || shrunk);
+    };
+    const later = () => setTimeout(update, 60);
+    const resetMax = () => { maxH = window.visualViewport?.height ?? window.innerHeight; later(); };
+    document.addEventListener("focusin", later);
+    document.addEventListener("focusout", later);
+    window.visualViewport?.addEventListener("resize", update);
+    window.addEventListener("orientationchange", resetMax);
+    update();
+    return () => {
+      document.removeEventListener("focusin", later);
+      document.removeEventListener("focusout", later);
+      window.visualViewport?.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", resetMax);
+      root.classList.remove("ek-typing");
+    };
+  }, []);
+
   const tone = (f: number, d = 0.08) => {
     if (!soundOn) return;
     try {

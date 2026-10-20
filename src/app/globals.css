@@ -289,3 +289,14 @@ img,svg,video,canvas{max-width:100%}
 
 /* EK-CAROUSEL-GAP: home ka banner carousel snap hote waqt screen ki side wall se na chipke (baaki cards jaisa 14px gap) */
 .car{scroll-padding-left:14px;scroll-padding-right:14px}
+
+/* EK-HOME-ICON-SIZE: home ke quick-action icons gol + thoda bade */
+.qa{gap:10px 2px;margin:8px 0 6px}
+.qa button{gap:7px;font-size:11.5px;font-weight:500;line-height:1.25;padding:2px 0}
+.qa .it,.qa.sq .it{width:55px;height:55px;border-radius:50%}
+.qa .it svg{width:25px;height:25px}
+
+/* EK-TYPING-CSS: keyboard khula ho to bottom nav + home bar gayab, content neeche tak */
+html.ek-typing nav{display:none !important}
+html.ek-typing #hbar{display:none !important}
+html.ek-typing #mn{bottom:0 !important}
