@@ -116,7 +116,7 @@ export function optStr(v: unknown, field: string, max = 120): string | undefined
 }
 
 export function posInt(v: unknown, field: string, max = 1_000_000): number {
-  const n = typeof v === "number" ? v : typeof v === "string" && /^\d+$/.test(v) ? Number(v) : NaN;
+  const n = typeof v === "number" ? v : NaN; // strings reject: paise wale API me strict type
   if (!Number.isSafeInteger(n) || n < 1 || n > max) {
     throw new ApiError(400, "INVALID_INPUT", `${field} 1–${max} ke beech integer hona chahiye`);
   }

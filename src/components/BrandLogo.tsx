@@ -60,16 +60,18 @@ export function BrandLogo({
   name: nameProp,
   size = 38,
   className = "",
+  radius: radiusProp,
 }: {
   brand?: string;
   name?: string;
   size?: number;
   className?: string;
+  radius?: number;
 }) {
   const name = brand ?? nameProp ?? "";
   const src = findLogo(name);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const radius = Math.round(size * 0.28);
+  const radius = radiusProp ?? Math.round(size * 0.28);
 
   if (src && failedSrc !== src) {
     const pad = Math.max(2, Math.round(size * 0.12));

@@ -283,7 +283,7 @@ export function useEkApp() {
     }
   }, [prefsReady, theme, soundOn, hideBal, intlUpi, payAlerts]);
 
-  // Theme lagao. Status bar bhi theme ke saath change hoti hai.
+  // Theme + status/nav bar = app background
   useEffect(() => {
     const root = document.documentElement;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -291,13 +291,13 @@ export function useEkApp() {
       const resolved = theme === "system" ? (mq.matches ? "dark" : "light") : theme;
       root.dataset.theme = resolved;
       const barColor = resolved === "dark" ? "#12050a" : "#fdf5f8";
-      let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
-      if (!meta) {
-        meta = document.createElement("meta");
-        meta.name = "theme-color";
-        document.head.appendChild(meta);
-      }
+      root.style.background = barColor;
+      document.body.style.background = barColor;
+      document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove());
+      const meta = document.createElement("meta");
+      meta.name = "theme-color";
       meta.content = barColor;
+      document.head.appendChild(meta);
       let apple = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement | null;
       if (!apple) {
         apple = document.createElement("meta");

@@ -19,7 +19,7 @@ export const viewport: Viewport = {
   userScalable: false,
   interactiveWidget: "resizes-content",
   viewportFit: "cover",
-  themeColor: "#e81a6c",
+  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#fdf5f8" }, { media: "(prefers-color-scheme: dark)", color: "#12050a" }],
 };
 
 export default function RootLayout({

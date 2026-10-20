@@ -1,7 +1,7 @@
 "use client";
 
+import { useState } from "react";
 import { inr } from "@/lib/format";
-import { Icon } from "@/components/Icon";
 import { BrandLogo } from "@/components/BrandLogo";
 import { useEk } from "@/context/EkContext";
 
@@ -35,8 +35,10 @@ export function AmtScreen() {
     loadAll,
   } = useEk();
 
-  // Recharge / bill / FASTag etc: amount fixed hai, isliye keypad ki zaroorat nahi
+  const [showBanks, setShowBanks] = useState(false);
+
   const isBill = contacts[payToIdx]?.[1] === "Verified Bill/Merchant";
+  const safeBankIdx = banks.length ? Math.min(payBankIdx, banks.length - 1) : 0;
 
   return (
     <div style={{ textAlign: "center", paddingTop: 4 }}>
@@ -55,54 +57,89 @@ export function AmtScreen() {
         ) : null
       ) : (
         <input
-        placeholder="Add a note (optional)"
-        value={payNote}
-        onChange={(e) => setPayNote(e.target.value)}
-        style={{ maxWidth: 220, margin: "0 auto 8px", textAlign: "center", display: "block", padding: "7px 12px" }}
-      />
+          placeholder="Add a note (optional)"
+          value={payNote}
+          onChange={(e) => setPayNote(e.target.value)}
+          style={{ maxWidth: 220, margin: "0 auto 8px", textAlign: "center", display: "block", padding: "7px 12px" }}
+        />
       )}
 
       <div className="chips" style={{ justifyContent: "center" }}>
-        <button className={`chip ${!useLite ? "on" : ""}`} onClick={() => setUseLite(false)}>
-          🏦 Bank Account
+        <button className={`chip ${!useLite ? "on" : ""}`} onClick={() => { setUseLite(false); setShowBanks(false); }}>
+          Bank Account
         </button>
-        <button className={`chip ${useLite ? "on" : ""}`} onClick={() => setUseLite(true)}>
-          ⚡ UPI Lite ({inr(upiLiteBal)})
+        <button className={`chip ${useLite ? "on" : ""}`} onClick={() => { setUseLite(true); setShowBanks(false); }}>
+          UPI Lite ({inr(upiLiteBal)})
         </button>
       </div>
 
-      {!useLite && (
-        <button
-          className="row"
-          onClick={() => setPayBankIdx((payBankIdx + 1) % banks.length)}
-          style={{ background: "var(--cd)", border: "1px solid var(--ln)", borderRadius: 14, padding: isBill ? "16px 14px" : "9px 12px", margin: isBill ? "4px 0" : "6px 0" }}
-        >
-          <BrandLogo brand={banks[payBankIdx][0]} size={38} />
-          <span className="m">
-            <b>{banks[payBankIdx][0]}</b>
-            <small>Balance {hideBal ? "₹ ••••••" : inr(banks[payBankIdx][1])}</small>
-          </span>
-          <span className="mu">Switch Bank</span>
-        </button>
+      {!useLite && banks.length > 0 && (
+        <div style={{ textAlign: "left", margin: isBill ? "4px 0 8px" : "6px 0 8px" }}>
+          <button
+            type="button"
+            className="row"
+            onClick={() => setShowBanks((v) => !v)}
+            style={{ background: "var(--cd)", border: "1px solid var(--ln)", borderRadius: 14, padding: isBill ? "14px 12px" : "10px 12px", width: "100%" }}
+          >
+            <BrandLogo brand={banks[safeBankIdx][0]} size={38} />
+            <span className="m">
+              <b>{banks[safeBankIdx][0]}</b>
+              <small>Balance {hideBal ? "Rs hidden" : inr(banks[safeBankIdx][1])}</small>
+            </span>
+            <span className="mu" style={{ fontWeight: 600, color: "var(--pr)" }}>
+              {showBanks ? "Close" : "Change"}
+            </span>
+          </button>
+          {showBanks && (
+            <div className="c" style={{ marginTop: 8, border: "1px solid var(--ln)", borderRadius: 14, overflow: "hidden" }}>
+              {banks.map((b, i) => (
+                <button
+                  key={b[0] + i}
+                  type="button"
+                  className="row"
+                  onClick={() => {
+                    setPayBankIdx(i);
+                    setShowBanks(false);
+                    tone(620, 0.04);
+                    showToast("Paying from " + b[0]);
+                  }}
+                  style={{
+                    background: i === safeBankIdx ? "rgba(232,26,108,0.08)" : "var(--cd)",
+                    borderBottom: i < banks.length - 1 ? "1px solid var(--ln)" : "none",
+                    borderRadius: 0,
+                    padding: "12px",
+                  }}
+                >
+                  <BrandLogo brand={b[0]} size={36} />
+                  <span className="m">
+                    <b>{b[0]}</b>
+                    <small>{hideBal ? "Rs hidden" : inr(b[1])}</small>
+                  </span>
+                  {i === safeBankIdx && <b className="cr">Selected</b>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {!isBill && (
         <div className="kp">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"].map((k) => (
-          <button
-            key={k}
-            onClick={() => {
-              tone(600, 0.03);
-              if (k === "⌫") setPayAmt((p) => p.slice(0, -1));
-              else if (k === ".") {
-                if (payAmt && !payAmt.includes(".")) setPayAmt((p) => p + ".");
-              } else if (payAmt.length < 7) setPayAmt((p) => p + k);
-            }}
-          >
-            {k}
-          </button>
-        ))}
-      </div>
+          {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"].map((k) => (
+            <button
+              key={k}
+              onClick={() => {
+                tone(600, 0.03);
+                if (k === "⌫") setPayAmt((p) => p.slice(0, -1));
+                else if (k === ".") {
+                  if (payAmt && !payAmt.includes(".")) setPayAmt((p) => p + ".");
+                } else if (payAmt.length < 7) setPayAmt((p) => p + k);
+              }}
+            >
+              {k}
+            </button>
+          ))}
+        </div>
       )}
 
       <button
@@ -135,14 +172,16 @@ export function AmtScreen() {
             })();
             return;
           }
-          if (a > banks[payBankIdx][1]) return showToast("Account me balance kam hai");
+          if (!banks.length) return showToast("Pehle bank link karo");
+          if (a > banks[safeBankIdx][1]) return showToast("Account me balance kam hai");
+          if (payBankIdx !== safeBankIdx) setPayBankIdx(safeBankIdx);
           setPin("");
           setPinErr("");
           payKey.current = "";
           setPinSheet(true);
         }}
       >
-        {useLite && Number(payAmt) <= 500 ? "⚡ Instant Pay (No PIN)" : "Proceed to Pay"}
+        {useLite && Number(payAmt) <= 500 ? "Instant Pay (No PIN)" : "Proceed to Pay"}
       </button>
     </div>
   );

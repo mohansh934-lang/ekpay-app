@@ -575,8 +575,10 @@ describe("deposit, card bill, self transfer, offerings", () => {
   });
 });
 
-describe("server data matches page.tsx (drift check)", () => {
-  const page = fs.readFileSync(path.join(process.cwd(), "src/app/page.tsx"), "utf8");
+describe("server data matches UI constants (drift check)", () => {
+  const read = (f: string) => fs.readFileSync(path.join(process.cwd(), f), "utf8");
+  const page = read("src/lib/constants.ts");
+  const uiText = ["src/components/screens/GoldScreen.tsx", "src/components/screens/LoansScreen.tsx", "src/hooks/useEkApp.tsx"].map(read).join("\n");
 
   test("offerings catalog: titles and prices", async () => {
     const { CATALOG } = await import("../src/server/catalog");
@@ -597,8 +599,8 @@ describe("server data matches page.tsx (drift check)", () => {
   });
 
   test("gold price and EMI amount used in UI text", () => {
-    assert.ok(page.includes("7820"));
-    assert.ok(page.includes("3240"));
+    assert.ok(uiText.includes("7820"));
+    assert.ok(uiText.includes("3240"));
   });
 });
 
