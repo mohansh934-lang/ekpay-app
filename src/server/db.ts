@@ -191,7 +191,20 @@ CREATE UNIQUE INDEX uq_complaint_active ON complaints(txn_id) WHERE status IN ('
 CREATE INDEX idx_complaints_user ON complaints(user_id, id DESC);
 `;
 
-export const MIGRATIONS: string[] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4];
+/**
+ * V5: WebAuthn biometric credentials — phone ka fingerprint/face sensor link karo.
+ */
+const SCHEMA_V5 = `
+CREATE TABLE IF NOT EXISTS webauthn_credentials (
+  user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  credential_id TEXT NOT NULL,
+  public_key    TEXT NOT NULL,
+  created_at    INTEGER NOT NULL DEFAULT (unixepoch()),
+  PRIMARY KEY (user_id)
+);
+`;
+
+export const MIGRATIONS: string[] = [SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5];
 
 function open(): DB {
   const proc = process as unknown as { getBuiltinModule?: (id: string) => unknown };

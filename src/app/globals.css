@@ -300,3 +300,30 @@ img,svg,video,canvas{max-width:100%}
 html.ek-typing nav{display:none !important}
 html.ek-typing #hbar{display:none !important}
 html.ek-typing #mn{bottom:0 !important}
+
+/* ============================================================
+   EK-SCREEN-TRANSITIONS: PhonePe/GPay jaisa smooth slide
+   ============================================================ */
+@keyframes ek-slide-in{from{transform:translateX(100%);opacity:.7}to{transform:translateX(0);opacity:1}}
+@keyframes ek-slide-out{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:.7}}
+@keyframes ek-fade-switch{from{opacity:0}to{opacity:1}}
+
+#mn.slide-in{animation:ek-slide-in .28s cubic-bezier(.25,.46,.45,.94) both}
+#mn.slide-out{animation:ek-slide-out .22s cubic-bezier(.55,.06,.68,.19) both}
+#mn.fade-switch{animation:ek-fade-switch .2s ease both}
+
+/* ============================================================
+   EK-SKELETON: shimmer loading placeholders (YouTube jaisa)
+   ============================================================ */
+.skel{background:var(--ln);position:relative;overflow:hidden}
+.skel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.18) 50%,transparent 100%);animation:ek-shimmer 1.4s ease-in-out infinite}
+:root[data-theme="dark"] .skel{background:rgba(255,255,255,.08)}
+:root[data-theme="dark"] .skel::after{background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.06) 50%,transparent 100%)}
+@keyframes ek-shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+
+/* ============================================================
+   EK-PULL-REFRESH: pull-to-refresh spinner
+   ============================================================ */
+.ptr-indicator{text-align:center;padding:12px 0 4px;color:var(--pr);font-size:12px;font-weight:600;animation:ek-fade-in .3s ease}
+.ptr-spinner{display:inline-block;width:20px;height:20px;border:2.5px solid var(--ln);border-top-color:var(--pr);border-radius:50%;animation:ek-spin .7s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes ek-spin{to{transform:rotate(360deg)}}

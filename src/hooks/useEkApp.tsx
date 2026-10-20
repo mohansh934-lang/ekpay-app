@@ -128,6 +128,8 @@ export function useEkApp() {
 
   const [navHist, setNavHist] = useState<string[]>(["home"]);
   const view = navHist[navHist.length - 1];
+  const [navAnim, setNavAnim] = useState<"" | "slide-in" | "slide-out" | "fade-switch">("");
+  const [refreshing, setRefreshing] = useState(false);
 
   // Utility States
   const [mobNum, setMobNum] = useState("9876543210");
@@ -321,6 +323,13 @@ export function useEkApp() {
     };
   }, []);
 
+  // Service Worker register karo (PWA install prompt + offline support)
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
   // EK-ZOOM-FIX: screen ki width/height ke hisab se UI scale (kam se kam 1x, zyada se zyada 1.7x, kuch cut nahi hoga)
   useEffect(() => {
     const BASE_W = 376, BASE_H = 680, MAX = 1.7;
@@ -384,6 +393,11 @@ export function useEkApp() {
     } catch {}
   };
 
+  // Haptic feedback — phone ka vibration motor (real app feel)
+  const vibrate = (pattern: number | number[] = 10) => {
+    try { navigator?.vibrate?.(pattern); } catch {}
+  };
+
   const showToast = (m: string) => {
     setToast(m);
     setTimeout(() => setToast(""), 2400);
@@ -421,20 +435,31 @@ export function useEkApp() {
   const go = (r: string) => {
     stopCamera();
     tone(620, 0.04);
+    vibrate(8);
     if (r === "notif") setUnread(0);
+    setNavAnim("slide-in");
     setNavHist((prev) => [...prev, r]);
+    setTimeout(() => setNavAnim(""), 300);
   };
 
   const back = () => {
     stopCamera();
     tone(520, 0.04);
-    setNavHist((prev) => (prev.length > 1 ? prev.slice(0, -1) : ["home"]));
+    vibrate(8);
+    setNavAnim("slide-out");
+    setTimeout(() => {
+      setNavHist((prev) => (prev.length > 1 ? prev.slice(0, -1) : ["home"]));
+      setNavAnim("");
+    }, 220);
   };
 
   const tab = (r: string) => {
     stopCamera();
     tone(620, 0.04);
+    vibrate(8);
+    setNavAnim("fade-switch");
     setNavHist([r]);
+    setTimeout(() => setNavAnim(""), 220);
   };
 
   // EK-BACK-HANDLER: phone ka back button / gesture
@@ -673,9 +698,72 @@ export function useEkApp() {
     showToast("Official receipt downloaded!");
   };
 
+  // Pull-to-refresh — pura data server se reload karo
+  const pullRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    await loadAll();
+    await loadCollectAndComplaints();
+    setRefreshing(false);
+    showToast("Data refreshed ✓");
+  };
+
+  // Web Share API — native share sheet (WhatsApp, etc.)
+  const shareReceipt = async (t: any) => {
+    const content = [
+      "====================================",
+      "       EK APP - OFFICIAL RECEIPT    ",
+      "====================================",
+      `Status          : COMPLETED ✓`,
+      `Amount          : ${inr(t.amt)}`,
+      `${t.cr ? "Received From" : "Paid To"}   : ${t.n}`,
+      `Payment Mode    : ${t.mode || "EkPay UPI"}`,
+      `Account         : ${t.bank}`,
+      `Category        : ${t.cat}`,
+      `UTR / Ref No.   : ${t.ref}`,
+      `Date & Time     : ${t.d}`,
+      "====================================",
+    ].join("\n");
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `EkPay Receipt – ${inr(t.amt)}`, text: content });
+        return;
+      } catch (e: any) { if (e?.name === "AbortError") return; }
+    }
+    try { await navigator.clipboard.writeText(content); showToast("Receipt copied to clipboard ✓"); } catch { showToast("Share not available"); }
+  };
+
+  // Contact Picker API — phone ki contact list se pick karo (Android Chrome)
+  const pickContact = async () => {
+    try {
+      if ("contacts" in navigator && "ContactsManager" in window) {
+        const props = ["name", "tel"];
+        const contacts_ = await (navigator as any).contacts.select(props, { multiple: false });
+        if (contacts_ && contacts_.length > 0) {
+          const c = contacts_[0];
+          const name = c.name?.[0] || "Contact";
+          let phone = c.tel?.[0] || "";
+          phone = phone.replace(/[\s\-\(\)]/g, "").replace(/^\+91/, "").replace(/^91(?=\d{10}$)/, "");
+          if (/^[6-9]\d{9}$/.test(phone)) {
+            const upi = phone + "@ekpay";
+            setContacts((prev: any) => [[name, `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`, upi], ...prev]);
+            setPayToIdx(0);
+            go("pay");
+            showToast(`${name} selected ✓`);
+            return true;
+          }
+        }
+      }
+    } catch (e: any) {
+      if (e?.name !== "NotAllowedError") showToast("Contact picker not available");
+    }
+    return false;
+  };
+
   const handlePinKey = async (k: string) => {
     if (k === "." || payBusy) return;
     tone(680, 0.04);
+    vibrate(5);
     setPinErr("");
     if (k !== "Pay") {
       setPin(k === "⌫" ? pin.slice(0, -1) : (pin + k).slice(0, 4));
@@ -702,6 +790,7 @@ export function useEkApp() {
 
     if (!r.ok) {
       tone(300, 0.2);
+      vibrate([80, 30, 80, 30, 80]); // triple-buzz for error
       setPin("");
       if (r.code === "INVALID_PIN" || r.code === "LOCKED" || r.code === "NETWORK") return setPinErr(r.message);
       setPinSheet(false);
@@ -710,6 +799,7 @@ export function useEkApp() {
     }
     payKey.current = "";
     await loadAll();
+    vibrate([50, 30, 50]); // double-buzz for success
     pushNotif("Payment Successful", `${inr(a)} debited from ${banks[payBankIdx][0]}`);
     setPinSheet(false);
     setPin("");
@@ -721,10 +811,12 @@ export function useEkApp() {
   const handleLockKey = (k: string) => {
     if (k === ".") return;
     tone(700, 0.04);
+    vibrate(5);
     const next = k === "⌫" ? lockPin.slice(0, -1) : (lockPin + k).slice(0, 4);
     setLockPin(next);
     if (next.length === 4) {
       tone(980, 0.15);
+      vibrate([50, 30, 50]);
       setTimeout(() => {
         setUnlocked(true);
         setLockPin("");
@@ -1009,6 +1101,12 @@ export function useEkApp() {
     payDone,
     triggerCheckout,
     downloadReceipt,
+    shareReceipt,
+    pickContact,
+    pullRefresh,
+    refreshing,
+    navAnim,
+    vibrate,
     handlePinKey,
     handleLockKey,
     myName,

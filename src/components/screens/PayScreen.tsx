@@ -11,6 +11,7 @@ export function PayScreen() {
     setPayToIdx,
     setPayAmt,
     go,
+    pickContact,
   } = useEk();
 
   return (
@@ -21,6 +22,12 @@ export function PayScreen() {
         <button onClick={() => { setNumInput(""); setNumModal("bank"); }}><span className="it"><Icon n="bank" /></span>Bank A/C</button>
         <button onClick={() => setNumModal("self")}><span className="it"><Icon n="up" /></span>Self Xfer</button>
       </div>
+      {/* Contact Picker — phone ki contact list se pick karo (Android Chrome) */}
+      {"contacts" in navigator && (
+        <button className="btn o" style={{ marginBottom: 10, fontSize: 12.5 }} onClick={() => pickContact()}>
+          📱 Pick from Phone Contacts
+        </button>
+      )}
       <h3>Verified Contacts</h3>
       <div className="c">
         {contacts.map((c, i) => (

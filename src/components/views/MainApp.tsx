@@ -38,12 +38,15 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { TxnScreen } from "@/components/screens/TxnScreen";
 import { StkScreen } from "@/components/screens/StkScreen";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function MainApp() {
   const {
     txns,
     baseView,
     subParam,
+    navAnim,
+    refreshing,
   } = useEk();
 
   return (
@@ -52,7 +55,11 @@ export function MainApp() {
       {/* HEADER: NO BACK BUTTON ON THE 4 ROOT TABS, WORKING BACK BUTTON ON ALL INNER SCREENS! */}
       {baseView !== "chat" && <AppHeader />}
 
-      <div id="mn" className={baseView === "chat" ? "sl chatmode" : "sl"}>
+      <div id="mn" className={`${baseView === "chat" ? "chatmode" : ""} ${navAnim}`}>
+        {/* Pull-to-refresh indicator */}
+        {refreshing && <div className="ptr-indicator"><span className="ptr-spinner" /> Refreshing...</div>}
+
+        <ErrorBoundary>
         {/* ================= HOME TAB ================= */}
         {baseView === "home" && <HomeScreen />}
 
@@ -136,6 +143,7 @@ export function MainApp() {
         {baseView === "cibil" && <CibilScreen />}
 
         {baseView === "analytics" && <AnalyticsScreen />}
+        </ErrorBoundary>
       </div>
 
       {baseView !== "chat" && <BottomNav />}

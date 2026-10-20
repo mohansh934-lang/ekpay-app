@@ -8,6 +8,7 @@ export function DoneScreen() {
     txns,
     tab,
     downloadReceipt,
+    shareReceipt,
   } = useEk();
 
   return (
@@ -24,7 +25,10 @@ export function DoneScreen() {
         <div className="row"><small className="m">UTR / Ref ID</small><b>{txns[0].ref}</b></div>
       </div>
       <button className="btn" onClick={() => tab("home")}>Done</button>
-      <button className="btn o" onClick={() => downloadReceipt(txns[0])}>Download Receipt (.txt)</button>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button className="btn o" style={{ flex: 1 }} onClick={() => downloadReceipt(txns[0])}>📥 Download</button>
+        <button className="btn o" style={{ flex: 1 }} onClick={() => shareReceipt(txns[0])}>📤 Share</button>
+      </div>
     </div>
   );
 }

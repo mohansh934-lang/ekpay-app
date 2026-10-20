@@ -3,6 +3,7 @@
 import { BrandLogo } from "../BrandLogo";
 import { inr } from "@/lib/format";
 import { Icon } from "@/components/Icon";
+import { UpiQR } from "@/components/QRCode";
 import { useEk } from "@/context/EkContext";
 
 export function ProfileScreen() {
@@ -31,17 +32,8 @@ export function ProfileScreen() {
         <b style={{ fontSize: 17 }}>{myName}</b>
         <p className="mu">UPI ID: {myUpi} • {myPhone}</p>
 
-        {/* Personal Receive QR Code right inside Profile! */}
-        <svg viewBox="0 0 120 120" width="148" height="148" style={{ margin: "12px auto 8px", background: "#fff", padding: 8, borderRadius: 12, border: "1px solid var(--ln)" }}>
-          <rect x="10" y="10" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
-          <rect x="80" y="10" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
-          <rect x="10" y="80" width="30" height="30" fill="none" stroke="#0f172a" strokeWidth="6" />
-          <rect x="20" y="20" width="10" height="10" fill="#e81a6c" />
-          <rect x="90" y="20" width="10" height="10" fill="#e81a6c" />
-          <rect x="20" y="90" width="10" height="10" fill="#e81a6c" />
-          <path d="M50 20h10v20H50zM50 50h20v20H50zM80 50h20v10H80zM50 80h15v25H50zM75 75h30v30H75z" fill="#0f172a" />
-        </svg>
-        <small style={{ display: "block" }}>Scan with any UPI app to pay {myName}</small>
+        {/* Real NPCI-spec UPI QR Code — scan with any UPI app! */}
+        <UpiQR vpa={myUpi} name={myName} />
       </div>
 
       <h3>My Payment Methods & Wallets</h3>
