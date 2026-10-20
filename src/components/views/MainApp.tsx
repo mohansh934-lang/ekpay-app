@@ -34,7 +34,6 @@ import { SplitScreen } from "@/components/screens/SplitScreen";
 import { CibilScreen } from "@/components/screens/CibilScreen";
 import { AnalyticsScreen } from "@/components/screens/AnalyticsScreen";
 import { useEk } from "@/context/EkContext";
-import { NotifBanner } from "@/components/layout/NotifBanner";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { TxnScreen } from "@/components/screens/TxnScreen";
 import { StkScreen } from "@/components/screens/StkScreen";
@@ -43,15 +42,12 @@ import { BottomNav } from "@/components/layout/BottomNav";
 export function MainApp() {
   const {
     txns,
-    banner,
     baseView,
     subParam,
   } = useEk();
 
   return (
     <>
-      {banner && <NotifBanner />}
-
 
       {/* HEADER: NO BACK BUTTON ON THE 4 ROOT TABS, WORKING BACK BUTTON ON ALL INNER SCREENS! */}
       {baseView !== "chat" && <AppHeader />}

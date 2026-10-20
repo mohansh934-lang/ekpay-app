@@ -28,7 +28,10 @@ export function PinSheet() {
       pin={pin}
       error={pinErr}
       message={payBusy ? "Verifying…" : ""}
-      keys={["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"]}
+      keys={["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "Pay"]}
+      actionKey="Pay"
+      actionLabel={payBusy ? "…" : "Pay"}
+      actionDisabled={payBusy}
       onKey={handlePinKey}
       onClose={() => { setPinSheet(false); setPinErr(""); setPin(""); payKey.current = ""; }}
     >

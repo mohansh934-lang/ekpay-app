@@ -350,9 +350,7 @@ export function useEkApp() {
     setNotifs((p) => [{ title, body, time: "Just now" }, ...p]);
     setUnread((u) => u + 1);
     if (!payAlerts) return; // alerts OFF: inbox me aayega, banner/sound nahi
-    setBanner({ title, body });
-    tone(988, 0.14);
-    setTimeout(() => setBanner(null), 3800);
+    tone(988, 0.14); // floating banner band: sirf inbox + sound
   };
 
   const stopCamera = () => {
@@ -398,8 +396,12 @@ export function useEkApp() {
 
   // EK-BACK-HANDLER: phone ka back button / gesture
   // Kahi bhi ho -> seedha Home. Home par ho -> pehli baar toast, 2 sec ke andar dobara back -> app se bahar.
-  const navRef = useRef({ view: "home", ready: false });
-  navRef.current = { view: navHist[navHist.length - 1], ready: authState === "in" && unlocked };
+  const navRef = useRef({ view: "home", ready: false, modal: false });
+  navRef.current = {
+    view: navHist[navHist.length - 1],
+    ready: authState === "in" && unlocked,
+    modal: !!(pinSheet || numModal || balSheetOpen || balCheckModal),
+  };
   const exitArmed = useRef(false);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -407,7 +409,27 @@ export function useEkApp() {
       window.history.pushState({ ek: 1 }, "");
     }
     const onPop = () => {
-      const { view: v, ready } = navRef.current;
+      // EK-SEARCH-BACK: home ka search khula hai to back sirf usko band kare
+      if ((window as any).__ekSearchOpen) {
+        window.history.pushState({ ek: 1 }, "");
+        window.dispatchEvent(new Event("ek-close-search"));
+        return;
+      }
+      const { view: v, ready, modal } = navRef.current;
+      // Koi PIN page / modal khula hai: back sirf usko band karega (app se bahar nahi jayega)
+      if (ready && modal) {
+        window.history.pushState({ ek: 1 }, "");
+        setPinSheet(false);
+        setPin("");
+        setPinErr("");
+        payKey.current = "";
+        setNumModal(null);
+        setBalSheetOpen(false);
+        setBalCheckModal(null);
+        setBalPinBusy(false);
+        setBalPinError("");
+        return;
+      }
       if (ready && v !== "home") {
         window.history.pushState({ ek: 1 }, "");
         stopCamera();
@@ -612,9 +634,12 @@ export function useEkApp() {
     if (k === "." || payBusy) return;
     tone(680, 0.04);
     setPinErr("");
-    const next = k === "⌫" ? pin.slice(0, -1) : (pin + k).slice(0, 4);
-    setPin(next);
-    if (next.length !== 4) return;
+    if (k !== "Pay") {
+      setPin(k === "⌫" ? pin.slice(0, -1) : (pin + k).slice(0, 4));
+      return;
+    }
+    if (pin.length !== 4) { setPinErr("4-digit UPI PIN daalo"); return; }
+    const next = pin;
 
     setPayBusy(true);
     if (!payKey.current) payKey.current = newKey(); // network retry par double-charge nahi hoga

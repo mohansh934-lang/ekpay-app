@@ -275,3 +275,17 @@ img,svg,video,canvas{max-width:100%}
 .pinpage .kp button{padding:15px 0;font-size:22px}
 .pinpage .kp button.btn{margin:0 6px;padding:14px 0;font-size:15px;align-self:center;width:auto;border-radius:999px}
 @media (max-height:620px){.pinpage .kp button{padding:10px 0;font-size:20px}}
+
+/* EK-HOME-SEARCH: home ka live search bar (38px = avatar ring jitna) + results panel */
+.sb2.live{height:38px;padding:0 12px;gap:8px;color:var(--tx);cursor:text}
+.sb2.live input::placeholder{color:var(--mu)}
+.srp{position:absolute;left:0;right:0;top:calc(48px + var(--sat,0px));bottom:calc(64px + var(--sab,0px));background:var(--bg);overflow-y:auto;z-index:12;padding:4px 14px 20px;font-size:14px;font-weight:400;scrollbar-width:none}
+.srp::-webkit-scrollbar{display:none}
+@media (max-height:620px){.srp{top:calc(44px + var(--sat,0px));bottom:calc(56px + var(--sab,0px))}}
+
+/* EK-HOME-SEARCH-2: search khula ho to bottom nav chhup jaye, results panel poori neeche tak */
+.ek-searching nav{display:none !important}
+.ek-searching .srp{bottom:0 !important}
+
+/* EK-CAROUSEL-GAP: home ka banner carousel snap hote waqt screen ki side wall se na chipke (baaki cards jaisa 14px gap) */
+.car{scroll-padding-left:14px;scroll-padding-right:14px}

@@ -70,7 +70,7 @@ export function BillMobileScreen() {
                 className="chip on"
                 onClick={() => {
                   if (mobNum.length !== 10) return showToast("10-digit mobile number daalo");
-                  triggerCheckout(`${mobOp} (${mobNum})`, p.price, `${p.data} • ${p.val}`);
+                  triggerCheckout(`${mobOp} (${mobNum})`, p.price, `${p.data} • ${p.val} • ${p.desc}`);
                 }}
               >
                 Pay

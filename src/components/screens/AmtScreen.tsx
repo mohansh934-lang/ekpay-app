@@ -35,6 +35,9 @@ export function AmtScreen() {
     loadAll,
   } = useEk();
 
+  // Recharge / bill / FASTag etc: amount fixed hai, isliye keypad ki zaroorat nahi
+  const isBill = contacts[payToIdx]?.[1] === "Verified Bill/Merchant";
+
   return (
     <div style={{ textAlign: "center", paddingTop: 4 }}>
       <div style={{ display: "inline-block" }}>
@@ -42,13 +45,22 @@ export function AmtScreen() {
       </div>
       <p style={{ marginTop: 6, fontWeight: 600 }}>Paying {contacts[payToIdx][0]}</p>
       <small>{contacts[payToIdx][2]} • EkPay Verified ✓</small>
-      <h1 style={{ fontSize: 40, fontWeight: 600, margin: "8px 0" }}>₹{payAmt || "0"}</h1>
-      <input
+      <h1 style={{ fontSize: 40, fontWeight: 600, margin: isBill ? "4px 0" : "8px 0" }}>₹{payAmt || "0"}</h1>
+      {isBill ? (
+        payNote ? (
+          <div style={{ background: "var(--cd)", border: "1px solid var(--ln)", borderRadius: 14, padding: "10px 14px", margin: "0 auto 8px", maxWidth: 320, textAlign: "left" }}>
+            <small className="mu" style={{ display: "block", marginBottom: 2 }}>Details</small>
+            <span style={{ fontSize: 13.5, lineHeight: 1.45, whiteSpace: "normal", wordBreak: "break-word" }}>{payNote}</span>
+          </div>
+        ) : null
+      ) : (
+        <input
         placeholder="Add a note (optional)"
         value={payNote}
         onChange={(e) => setPayNote(e.target.value)}
         style={{ maxWidth: 220, margin: "0 auto 8px", textAlign: "center", display: "block", padding: "7px 12px" }}
       />
+      )}
 
       <div className="chips" style={{ justifyContent: "center" }}>
         <button className={`chip ${!useLite ? "on" : ""}`} onClick={() => setUseLite(false)}>
@@ -63,7 +75,7 @@ export function AmtScreen() {
         <button
           className="row"
           onClick={() => setPayBankIdx((payBankIdx + 1) % banks.length)}
-          style={{ background: "var(--cd)", border: "1px solid var(--ln)", borderRadius: 14, padding: "9px 12px", margin: "6px 0" }}
+          style={{ background: "var(--cd)", border: "1px solid var(--ln)", borderRadius: 14, padding: isBill ? "16px 14px" : "9px 12px", margin: isBill ? "4px 0" : "6px 0" }}
         >
           <span className="it"><Icon n="bank" /></span>
           <span className="m">
@@ -74,7 +86,8 @@ export function AmtScreen() {
         </button>
       )}
 
-      <div className="kp">
+      {!isBill && (
+        <div className="kp">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"].map((k) => (
           <button
             key={k}
@@ -90,9 +103,11 @@ export function AmtScreen() {
           </button>
         ))}
       </div>
+      )}
 
       <button
         className="btn"
+        style={isBill ? { marginTop: 8, padding: "15px" } : undefined}
         onClick={() => {
           const a = Number(payAmt);
           if (!a) return showToast("Amount daalo");

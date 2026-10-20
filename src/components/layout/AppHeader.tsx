@@ -2,6 +2,7 @@
 
 import { Icon } from "@/components/Icon";
 import { useEk } from "@/context/EkContext";
+import { HomeSearch } from "@/components/layout/HomeSearch";
 
 export function AppHeader() {
   const {
@@ -9,7 +10,6 @@ export function AppHeader() {
     unread,
     go,
     back,
-    tab,
     initials,
     isRootTab,
     headerTitle,
@@ -28,9 +28,7 @@ export function AppHeader() {
             {initials}
           </span>
           {view === "home" ? (
-            <button className="sb2" onClick={() => tab("txns")}>
-              <Icon n="search" s={15} /> Search contacts, bills & UTR
-            </button>
+            <HomeSearch />
           ) : (
             <span className="g">{headerTitle}</span>
           )}
