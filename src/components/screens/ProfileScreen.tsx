@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "../BrandLogo";
 import { inr } from "@/lib/format";
 import { Icon } from "@/components/Icon";
 import { useEk } from "@/context/EkContext";
@@ -69,7 +70,7 @@ export function ProfileScreen() {
         {getLiveBanks().map((b, i) => (
           <div key={b.id || i} className="row" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="it"><Icon n="bank" /></span>
+              <BrandLogo name={b.label} size={38} />
               <span className="m">
                 <b>{b.label} {b.isPrimary && <small className="cr">(Primary)</small>}</b>
                 <small>

@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "../BrandLogo";
 import { Icon } from "@/components/Icon";
 import { useEk } from "@/context/EkContext";
 
@@ -50,7 +51,7 @@ export function AddbankScreen() {
           ) : (
             discoveredAccs.map((acc) => (
               <div key={acc.last4} className="row" style={{ marginTop: 6 }}>
-                <span className="it"><Icon n="bank" /></span>
+                <BrandLogo name={pickedBank.name} size={38} />
                 <span className="m">
                   <b>{acc.type} Account • {acc.maskedNumber}</b>
                   <small>IFSC: {acc.ifsc}</small>
@@ -102,7 +103,7 @@ export function AddbankScreen() {
               else showToast(d?.error?.message || "Discovery failed");
             }}
           >
-            <span className="it"><Icon n="bank" /></span>
+            <BrandLogo name={b.name} size={38} />
             <span className="m">
               <b>{b.name}</b>
               <small style={{ textTransform: "capitalize" }}>{b.category.replace("_", " ")} Bank</small>

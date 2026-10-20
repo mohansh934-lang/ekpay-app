@@ -23,8 +23,8 @@ export function BillGasScreen() {
       </div>
       <div className="chips" style={{ marginTop: 8 }}>
         {["Indane Gas (IndianOil)", "Bharat Gas", "HP Gas"].map((g) => (
-          <button key={g} className={`chip ${gasOp === g ? "on" : ""}`} onClick={() => setGasOp(g)}>
-            {g.split(" ")[0]}
+          <button key={g} className={`chip ${gasOp === g ? "on" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => setGasOp(g)}>
+            <BrandLogo brand={g} size={20} radius={6} />{g.split(" ")[0]}
           </button>
         ))}
       </div>

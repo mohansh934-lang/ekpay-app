@@ -1,7 +1,7 @@
 "use client";
 
 import { inr } from "@/lib/format";
-import { Icon } from "@/components/Icon";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useEk } from "@/context/EkContext";
 
 export function BalSheet() {
@@ -28,7 +28,7 @@ export function BalSheet() {
             const isUnlocked = checkedBalances[b.id] !== undefined;
             return (
               <div key={b.id} className="row">
-                <span className="it"><Icon n="bank" /></span>
+                <BrandLogo brand={b.label} size={38} />
                 <span className="m">
                   <b>{b.label}</b>
                   <small>{isUnlocked ? `Unlocked: ${inr(b.balance)}` : "Balance: ₹ ••••••"}</small>

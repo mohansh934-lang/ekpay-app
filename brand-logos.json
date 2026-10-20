@@ -1,0 +1,866 @@
+{
+  "jio": {
+    "domain": "jio.com",
+    "localPath": "/logos/jio-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=jio.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/jio.com.ico"
+  },
+  "reliance jio": {
+    "domain": "jio.com",
+    "localPath": "/logos/jio-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=jio.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/jio.com.ico"
+  },
+  "airtel": {
+    "domain": "airtel.in",
+    "localPath": "/logos/airtel-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=airtel.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/airtel.in.ico"
+  },
+  "vi": {
+    "domain": "myvi.in",
+    "localPath": "/logos/myvi-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=myvi.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/myvi.in.ico"
+  },
+  "vodafone idea": {
+    "domain": "myvi.in",
+    "localPath": "/logos/myvi-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=myvi.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/myvi.in.ico"
+  },
+  "bsnl": {
+    "domain": "bsnl.co.in",
+    "localPath": "/logos/bsnl-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bsnl.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bsnl.co.in.ico"
+  },
+  "mtnl": {
+    "domain": "mtnl.net.in",
+    "localPath": "/logos/mtnl-net-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mtnl.net.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mtnl.net.in.ico"
+  },
+  "tata play": {
+    "domain": "tataplay.com",
+    "localPath": "/logos/tataplay-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=tataplay.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/tataplay.com.ico"
+  },
+  "tataplay": {
+    "domain": "tataplay.com",
+    "localPath": "/logos/tataplay-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=tataplay.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/tataplay.com.ico"
+  },
+  "airtel digital tv": {
+    "domain": "airtel.in",
+    "localPath": "/logos/airtel-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=airtel.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/airtel.in.ico"
+  },
+  "airtel dth": {
+    "domain": "airtel.in",
+    "localPath": "/logos/airtel-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=airtel.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/airtel.in.ico"
+  },
+  "dish tv": {
+    "domain": "dishtv.in",
+    "localPath": "/logos/dishtv-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=dishtv.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/dishtv.in.ico"
+  },
+  "dishtv": {
+    "domain": "dishtv.in",
+    "localPath": "/logos/dishtv-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=dishtv.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/dishtv.in.ico"
+  },
+  "d2h": {
+    "domain": "d2h.com",
+    "localPath": "/logos/d2h-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=d2h.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/d2h.com.ico"
+  },
+  "videocon d2h": {
+    "domain": "d2h.com",
+    "localPath": "/logos/d2h-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=d2h.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/d2h.com.ico"
+  },
+  "sun direct": {
+    "domain": "sundirect.in",
+    "localPath": "/logos/sundirect-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=sundirect.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/sundirect.in.ico"
+  },
+  "gtpl": {
+    "domain": "gtpl.net",
+    "localPath": "/logos/gtpl-net.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=gtpl.net&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/gtpl.net.ico"
+  },
+  "hathway": {
+    "domain": "hathway.com",
+    "localPath": "/logos/hathway-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=hathway.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/hathway.com.ico"
+  },
+  "den networks": {
+    "domain": "dennetworks.com",
+    "localPath": "/logos/dennetworks-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=dennetworks.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/dennetworks.com.ico"
+  },
+  "hp gas": {
+    "domain": "hindustanpetroleum.com",
+    "localPath": "/logos/hindustanpetroleum-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=hindustanpetroleum.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/hindustanpetroleum.com.ico"
+  },
+  "hpcl": {
+    "domain": "hindustanpetroleum.com",
+    "localPath": "/logos/hindustanpetroleum-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=hindustanpetroleum.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/hindustanpetroleum.com.ico"
+  },
+  "bharat gas": {
+    "domain": "ebharatgas.com",
+    "localPath": "/logos/ebharatgas-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=ebharatgas.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/ebharatgas.com.ico"
+  },
+  "bpcl": {
+    "domain": "bharatpetroleum.in",
+    "localPath": "/logos/bharatpetroleum-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bharatpetroleum.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bharatpetroleum.in.ico"
+  },
+  "indane": {
+    "domain": "iocl.com",
+    "localPath": "/logos/iocl-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=iocl.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/iocl.com.ico"
+  },
+  "indane gas": {
+    "domain": "iocl.com",
+    "localPath": "/logos/iocl-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=iocl.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/iocl.com.ico"
+  },
+  "indian oil": {
+    "domain": "iocl.com",
+    "localPath": "/logos/iocl-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=iocl.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/iocl.com.ico"
+  },
+  "adani total gas": {
+    "domain": "adanigas.com",
+    "localPath": "/logos/adanigas-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=adanigas.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/adanigas.com.ico"
+  },
+  "indraprastha gas": {
+    "domain": "iglonline.net",
+    "localPath": "/logos/iglonline-net.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=iglonline.net&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/iglonline.net.ico"
+  },
+  "igl": {
+    "domain": "iglonline.net",
+    "localPath": "/logos/iglonline-net.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=iglonline.net&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/iglonline.net.ico"
+  },
+  "mahanagar gas": {
+    "domain": "mahanagargas.com",
+    "localPath": "/logos/mahanagargas-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mahanagargas.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mahanagargas.com.ico"
+  },
+  "mgl": {
+    "domain": "mahanagargas.com",
+    "localPath": "/logos/mahanagargas-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mahanagargas.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mahanagargas.com.ico"
+  },
+  "gujarat gas": {
+    "domain": "gujaratgas.com",
+    "localPath": "/logos/gujaratgas-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=gujaratgas.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/gujaratgas.com.ico"
+  },
+  "mpcz": {
+    "domain": "mpcz.in",
+    "localPath": "/logos/mpcz-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mpcz.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mpcz.in.ico"
+  },
+  "mp madhya kshetra": {
+    "domain": "mpcz.in",
+    "localPath": "/logos/mpcz-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mpcz.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mpcz.in.ico"
+  },
+  "mp paschim kshetra": {
+    "domain": "mpwz.co.in",
+    "localPath": "/logos/mpwz-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mpwz.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mpwz.co.in.ico"
+  },
+  "mppkvvcl": {
+    "domain": "mpwz.co.in",
+    "localPath": "/logos/mpwz-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mpwz.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mpwz.co.in.ico"
+  },
+  "mp poorv kshetra": {
+    "domain": "mpez.co.in",
+    "localPath": "/logos/mpez-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mpez.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mpez.co.in.ico"
+  },
+  "tata power": {
+    "domain": "tatapower.com",
+    "localPath": "/logos/tatapower-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=tatapower.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/tatapower.com.ico"
+  },
+  "adani electricity": {
+    "domain": "adanielectricity.com",
+    "localPath": "/logos/adanielectricity-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=adanielectricity.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/adanielectricity.com.ico"
+  },
+  "bses": {
+    "domain": "bsesdelhi.com",
+    "localPath": "/logos/bsesdelhi-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bsesdelhi.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bsesdelhi.com.ico"
+  },
+  "bses rajdhani": {
+    "domain": "bsesdelhi.com",
+    "localPath": "/logos/bsesdelhi-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bsesdelhi.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bsesdelhi.com.ico"
+  },
+  "bses yamuna": {
+    "domain": "bsesdelhi.com",
+    "localPath": "/logos/bsesdelhi-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bsesdelhi.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bsesdelhi.com.ico"
+  },
+  "msedcl": {
+    "domain": "mahadiscom.in",
+    "localPath": "/logos/mahadiscom-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mahadiscom.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mahadiscom.in.ico"
+  },
+  "mahavitaran": {
+    "domain": "mahadiscom.in",
+    "localPath": "/logos/mahadiscom-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mahadiscom.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mahadiscom.in.ico"
+  },
+  "uppcl": {
+    "domain": "uppcl.org",
+    "localPath": "/logos/uppcl-org.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=uppcl.org&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/uppcl.org.ico"
+  },
+  "bescom": {
+    "domain": "bescom.karnataka.gov.in",
+    "localPath": "/logos/bescom-karnataka-gov-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bescom.karnataka.gov.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bescom.karnataka.gov.in.ico"
+  },
+  "tneb": {
+    "domain": "tangedco.org",
+    "localPath": "/logos/tangedco-org.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=tangedco.org&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/tangedco.org.ico"
+  },
+  "cesc": {
+    "domain": "cesc.co.in",
+    "localPath": "/logos/cesc-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=cesc.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/cesc.co.in.ico"
+  },
+  "torrent power": {
+    "domain": "torrentpower.com",
+    "localPath": "/logos/torrentpower-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=torrentpower.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/torrentpower.com.ico"
+  },
+  "state bank of india": {
+    "domain": "sbi.co.in",
+    "localPath": "/logos/sbi-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=sbi.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/sbi.co.in.ico"
+  },
+  "sbi": {
+    "domain": "sbi.co.in",
+    "localPath": "/logos/sbi-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=sbi.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/sbi.co.in.ico"
+  },
+  "hdfc bank": {
+    "domain": "hdfcbank.com",
+    "localPath": "/logos/hdfcbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=hdfcbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/hdfcbank.com.ico"
+  },
+  "hdfc": {
+    "domain": "hdfcbank.com",
+    "localPath": "/logos/hdfcbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=hdfcbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/hdfcbank.com.ico"
+  },
+  "icici bank": {
+    "domain": "icicibank.com",
+    "localPath": "/logos/icicibank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=icicibank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/icicibank.com.ico"
+  },
+  "icici": {
+    "domain": "icicibank.com",
+    "localPath": "/logos/icicibank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=icicibank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/icicibank.com.ico"
+  },
+  "axis bank": {
+    "domain": "axisbank.com",
+    "localPath": "/logos/axisbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=axisbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/axisbank.com.ico"
+  },
+  "axis": {
+    "domain": "axisbank.com",
+    "localPath": "/logos/axisbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=axisbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/axisbank.com.ico"
+  },
+  "kotak mahindra bank": {
+    "domain": "kotak.com",
+    "localPath": "/logos/kotak-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=kotak.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/kotak.com.ico"
+  },
+  "kotak": {
+    "domain": "kotak.com",
+    "localPath": "/logos/kotak-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=kotak.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/kotak.com.ico"
+  },
+  "punjab national bank": {
+    "domain": "pnbindia.in",
+    "localPath": "/logos/pnbindia-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=pnbindia.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/pnbindia.in.ico"
+  },
+  "pnb": {
+    "domain": "pnbindia.in",
+    "localPath": "/logos/pnbindia-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=pnbindia.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/pnbindia.in.ico"
+  },
+  "bank of baroda": {
+    "domain": "bankofbaroda.in",
+    "localPath": "/logos/bankofbaroda-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bankofbaroda.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bankofbaroda.in.ico"
+  },
+  "bob": {
+    "domain": "bankofbaroda.in",
+    "localPath": "/logos/bankofbaroda-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bankofbaroda.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bankofbaroda.in.ico"
+  },
+  "canara bank": {
+    "domain": "canarabank.com",
+    "localPath": "/logos/canarabank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=canarabank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/canarabank.com.ico"
+  },
+  "union bank of india": {
+    "domain": "unionbankofindia.co.in",
+    "localPath": "/logos/unionbankofindia-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=unionbankofindia.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/unionbankofindia.co.in.ico"
+  },
+  "yes bank": {
+    "domain": "yesbank.in",
+    "localPath": "/logos/yesbank-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=yesbank.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/yesbank.in.ico"
+  },
+  "idfc first bank": {
+    "domain": "idfcfirstbank.com",
+    "localPath": "/logos/idfcfirstbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=idfcfirstbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/idfcfirstbank.com.ico"
+  },
+  "idfc": {
+    "domain": "idfcfirstbank.com",
+    "localPath": "/logos/idfcfirstbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=idfcfirstbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/idfcfirstbank.com.ico"
+  },
+  "paytm payments bank": {
+    "domain": "paytmbank.com",
+    "localPath": "/logos/paytmbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=paytmbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/paytmbank.com.ico"
+  },
+  "bank of india": {
+    "domain": "bankofindia.co.in",
+    "localPath": "/logos/bankofindia-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bankofindia.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bankofindia.co.in.ico"
+  },
+  "indian bank": {
+    "domain": "indianbank.in",
+    "localPath": "/logos/indianbank-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=indianbank.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/indianbank.in.ico"
+  },
+  "central bank of india": {
+    "domain": "centralbankofindia.co.in",
+    "localPath": "/logos/centralbankofindia-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=centralbankofindia.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/centralbankofindia.co.in.ico"
+  },
+  "indian overseas bank": {
+    "domain": "iob.in",
+    "localPath": "/logos/iob-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=iob.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/iob.in.ico"
+  },
+  "uco bank": {
+    "domain": "ucobank.com",
+    "localPath": "/logos/ucobank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=ucobank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/ucobank.com.ico"
+  },
+  "bank of maharashtra": {
+    "domain": "bankofmaharashtra.in",
+    "localPath": "/logos/bankofmaharashtra-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bankofmaharashtra.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bankofmaharashtra.in.ico"
+  },
+  "punjab & sind bank": {
+    "domain": "punjabandsindbank.co.in",
+    "localPath": "/logos/punjabandsindbank-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=punjabandsindbank.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/punjabandsindbank.co.in.ico"
+  },
+  "indusind bank": {
+    "domain": "indusind.com",
+    "localPath": "/logos/indusind-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=indusind.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/indusind.com.ico"
+  },
+  "federal bank": {
+    "domain": "federalbank.co.in",
+    "localPath": "/logos/federalbank-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=federalbank.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/federalbank.co.in.ico"
+  },
+  "idbi bank": {
+    "domain": "idbibank.in",
+    "localPath": "/logos/idbibank-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=idbibank.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/idbibank.in.ico"
+  },
+  "south indian bank": {
+    "domain": "southindianbank.com",
+    "localPath": "/logos/southindianbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=southindianbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/southindianbank.com.ico"
+  },
+  "karnataka bank": {
+    "domain": "karnatakabank.com",
+    "localPath": "/logos/karnatakabank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=karnatakabank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/karnatakabank.com.ico"
+  },
+  "karur vysya bank": {
+    "domain": "kvb.co.in",
+    "localPath": "/logos/kvb-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=kvb.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/kvb.co.in.ico"
+  },
+  "city union bank": {
+    "domain": "cityunionbank.com",
+    "localPath": "/logos/cityunionbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=cityunionbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/cityunionbank.com.ico"
+  },
+  "tamilnad mercantile bank": {
+    "domain": "tmb.in",
+    "localPath": "/logos/tmb-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=tmb.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/tmb.in.ico"
+  },
+  "rbl bank": {
+    "domain": "rblbank.com",
+    "localPath": "/logos/rblbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=rblbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/rblbank.com.ico"
+  },
+  "bandhan bank": {
+    "domain": "bandhanbank.com",
+    "localPath": "/logos/bandhanbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bandhanbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bandhanbank.com.ico"
+  },
+  "dcb bank": {
+    "domain": "dcbbank.com",
+    "localPath": "/logos/dcbbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=dcbbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/dcbbank.com.ico"
+  },
+  "csb bank": {
+    "domain": "csb.co.in",
+    "localPath": "/logos/csb-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=csb.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/csb.co.in.ico"
+  },
+  "dhanlaxmi bank": {
+    "domain": "dhanbank.com",
+    "localPath": "/logos/dhanbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=dhanbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/dhanbank.com.ico"
+  },
+  "jammu & kashmir bank": {
+    "domain": "jkbank.com",
+    "localPath": "/logos/jkbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=jkbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/jkbank.com.ico"
+  },
+  "nainital bank": {
+    "domain": "nainitalbank.co.in",
+    "localPath": "/logos/nainitalbank-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=nainitalbank.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/nainitalbank.co.in.ico"
+  },
+  "au small finance bank": {
+    "domain": "aubank.in",
+    "localPath": "/logos/aubank-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=aubank.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/aubank.in.ico"
+  },
+  "equitas small finance bank": {
+    "domain": "equitasbank.com",
+    "localPath": "/logos/equitasbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=equitasbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/equitasbank.com.ico"
+  },
+  "ujjivan small finance bank": {
+    "domain": "ujjivansfb.in",
+    "localPath": "/logos/ujjivansfb-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=ujjivansfb.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/ujjivansfb.in.ico"
+  },
+  "jana small finance bank": {
+    "domain": "janabank.com",
+    "localPath": "/logos/janabank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=janabank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/janabank.com.ico"
+  },
+  "suryoday small finance bank": {
+    "domain": "suryodaybank.com",
+    "localPath": "/logos/suryodaybank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=suryodaybank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/suryodaybank.com.ico"
+  },
+  "esaf small finance bank": {
+    "domain": "esafbank.com",
+    "localPath": "/logos/esafbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=esafbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/esafbank.com.ico"
+  },
+  "utkarsh small finance bank": {
+    "domain": "utkarsh.bank",
+    "localPath": "/logos/utkarsh-bank.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=utkarsh.bank&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/utkarsh.bank.ico"
+  },
+  "capital small finance bank": {
+    "domain": "capitalbank.co.in",
+    "localPath": "/logos/capitalbank-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=capitalbank.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/capitalbank.co.in.ico"
+  },
+  "shivalik small finance bank": {
+    "domain": "shivalikbank.com",
+    "localPath": "/logos/shivalikbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=shivalikbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/shivalikbank.com.ico"
+  },
+  "unity small finance bank": {
+    "domain": "theunitybank.com",
+    "localPath": "/logos/theunitybank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=theunitybank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/theunitybank.com.ico"
+  },
+  "airtel payments bank": {
+    "domain": "airtel.in",
+    "localPath": "/logos/airtel-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=airtel.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/airtel.in.ico"
+  },
+  "india post payments bank": {
+    "domain": "ippbonline.com",
+    "localPath": "/logos/ippbonline-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=ippbonline.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/ippbonline.com.ico"
+  },
+  "fino payments bank": {
+    "domain": "finobank.com",
+    "localPath": "/logos/finobank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=finobank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/finobank.com.ico"
+  },
+  "jio payments bank": {
+    "domain": "jiopaymentsbank.com",
+    "localPath": "/logos/jiopaymentsbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=jiopaymentsbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/jiopaymentsbank.com.ico"
+  },
+  "nsdl payments bank": {
+    "domain": "nsdlbank.com",
+    "localPath": "/logos/nsdlbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=nsdlbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/nsdlbank.com.ico"
+  },
+  "standard chartered bank": {
+    "domain": "sc.com",
+    "localPath": "/logos/sc-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=sc.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/sc.com.ico"
+  },
+  "hsbc": {
+    "domain": "hsbc.co.in",
+    "localPath": "/logos/hsbc-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=hsbc.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/hsbc.co.in.ico"
+  },
+  "citibank": {
+    "domain": "online.citibank.co.in",
+    "localPath": "/logos/online-citibank-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=online.citibank.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/online.citibank.co.in.ico"
+  },
+  "dbs bank india": {
+    "domain": "dbs.com",
+    "localPath": "/logos/dbs-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=dbs.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/dbs.com.ico"
+  },
+  "deutsche bank": {
+    "domain": "deutschebank.co.in",
+    "localPath": "/logos/deutschebank-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=deutschebank.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/deutschebank.co.in.ico"
+  },
+  "madhya pradesh gramin bank": {
+    "domain": "mpgb.co.in",
+    "localPath": "/logos/mpgb-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=mpgb.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/mpgb.co.in.ico"
+  },
+  "karnataka gramin bank": {
+    "domain": "karnatakagraminbank.com",
+    "localPath": "/logos/karnatakagraminbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=karnatakagraminbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/karnatakagraminbank.com.ico"
+  },
+  "kerala gramin bank": {
+    "domain": "keralagbank.com",
+    "localPath": "/logos/keralagbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=keralagbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/keralagbank.com.ico"
+  },
+  "baroda up bank": {
+    "domain": "barodaupbank.in",
+    "localPath": "/logos/barodaupbank-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=barodaupbank.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/barodaupbank.in.ico"
+  },
+  "saraswat co-operative bank": {
+    "domain": "saraswatbank.com",
+    "localPath": "/logos/saraswatbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=saraswatbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/saraswatbank.com.ico"
+  },
+  "cosmos co-operative bank": {
+    "domain": "cosmosbank.com",
+    "localPath": "/logos/cosmosbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=cosmosbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/cosmosbank.com.ico"
+  },
+  "svc co-operative bank": {
+    "domain": "svcbank.com",
+    "localPath": "/logos/svcbank-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=svcbank.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/svcbank.com.ico"
+  },
+  "irctc": {
+    "domain": "irctc.co.in",
+    "localPath": "/logos/irctc-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=irctc.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/irctc.co.in.ico"
+  },
+  "indian railways": {
+    "domain": "irctc.co.in",
+    "localPath": "/logos/irctc-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=irctc.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/irctc.co.in.ico"
+  },
+  "nhai": {
+    "domain": "ihmcl.co.in",
+    "localPath": "/logos/ihmcl-co-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=ihmcl.co.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/ihmcl.co.in.ico"
+  },
+  "fastag": {
+    "domain": "npci.org.in",
+    "localPath": "/logos/npci-org-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=npci.org.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/npci.org.in.ico"
+  },
+  "netflix": {
+    "domain": "netflix.com",
+    "localPath": "/logos/netflix-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=netflix.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/netflix.com.ico"
+  },
+  "spotify": {
+    "domain": "spotify.com",
+    "localPath": "/logos/spotify-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=spotify.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/spotify.com.ico"
+  },
+  "amazon prime": {
+    "domain": "primevideo.com",
+    "localPath": "/logos/primevideo-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=primevideo.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/primevideo.com.ico"
+  },
+  "disney+ hotstar": {
+    "domain": "hotstar.com",
+    "localPath": "/logos/hotstar-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=hotstar.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/hotstar.com.ico"
+  },
+  "hotstar": {
+    "domain": "hotstar.com",
+    "localPath": "/logos/hotstar-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=hotstar.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/hotstar.com.ico"
+  },
+  "youtube premium": {
+    "domain": "youtube.com",
+    "localPath": "/logos/youtube-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=youtube.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/youtube.com.ico"
+  },
+  "youtube": {
+    "domain": "youtube.com",
+    "localPath": "/logos/youtube-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=youtube.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/youtube.com.ico"
+  },
+  "sonyliv": {
+    "domain": "sonyliv.com",
+    "localPath": "/logos/sonyliv-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=sonyliv.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/sonyliv.com.ico"
+  },
+  "zee5": {
+    "domain": "zee5.com",
+    "localPath": "/logos/zee5-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=zee5.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/zee5.com.ico"
+  },
+  "crunchyroll": {
+    "domain": "crunchyroll.com",
+    "localPath": "/logos/crunchyroll-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=crunchyroll.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/crunchyroll.com.ico"
+  },
+  "zomato": {
+    "domain": "zomato.com",
+    "localPath": "/logos/zomato-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=zomato.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/zomato.com.ico"
+  },
+  "swiggy": {
+    "domain": "swiggy.com",
+    "localPath": "/logos/swiggy-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=swiggy.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/swiggy.com.ico"
+  },
+  "amazon": {
+    "domain": "amazon.in",
+    "localPath": "/logos/amazon-in.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=amazon.in&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/amazon.in.ico"
+  },
+  "flipkart": {
+    "domain": "flipkart.com",
+    "localPath": "/logos/flipkart-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=flipkart.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/flipkart.com.ico"
+  },
+  "uber": {
+    "domain": "uber.com",
+    "localPath": "/logos/uber-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=uber.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/uber.com.ico"
+  },
+  "ola": {
+    "domain": "olacabs.com",
+    "localPath": "/logos/olacabs-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=olacabs.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/olacabs.com.ico"
+  },
+  "rapido": {
+    "domain": "rapido.bike",
+    "localPath": "/logos/rapido-bike.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=rapido.bike&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/rapido.bike.ico"
+  },
+  "dmart": {
+    "domain": "dmartindia.com",
+    "localPath": "/logos/dmartindia-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=dmartindia.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/dmartindia.com.ico"
+  },
+  "bigbasket": {
+    "domain": "bigbasket.com",
+    "localPath": "/logos/bigbasket-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=bigbasket.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/bigbasket.com.ico"
+  },
+  "blinkit": {
+    "domain": "blinkit.com",
+    "localPath": "/logos/blinkit-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=blinkit.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/blinkit.com.ico"
+  },
+  "zepto": {
+    "domain": "zeptonow.com",
+    "localPath": "/logos/zeptonow-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=zeptonow.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/zeptonow.com.ico"
+  },
+  "myntra": {
+    "domain": "myntra.com",
+    "localPath": "/logos/myntra-com.png",
+    "onlineUrl": "https://www.google.com/s2/favicons?domain=myntra.com&sz=128",
+    "backupOnlineUrl": "https://icons.duckduckgo.com/ip3/myntra.com.ico"
+  }
+}

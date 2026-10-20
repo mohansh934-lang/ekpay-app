@@ -26,8 +26,8 @@ export function BillDthScreen() {
         </div>
         <div className="chips" style={{ marginTop: 8 }}>
           {Object.keys(DTH_PACKS).map((op) => (
-            <button key={op} className={`chip ${dthOp === op ? "on" : ""}`} onClick={() => setDthOp(op)}>
-              {op}
+            <button key={op} className={`chip ${dthOp === op ? "on" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => setDthOp(op)}>
+              <BrandLogo brand={op} size={20} radius={6} />{op}
             </button>
           ))}
         </div>

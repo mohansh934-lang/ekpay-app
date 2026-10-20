@@ -77,7 +77,7 @@ export function AmtScreen() {
           onClick={() => setPayBankIdx((payBankIdx + 1) % banks.length)}
           style={{ background: "var(--cd)", border: "1px solid var(--ln)", borderRadius: 14, padding: isBill ? "16px 14px" : "9px 12px", margin: isBill ? "4px 0" : "6px 0" }}
         >
-          <span className="it"><Icon n="bank" /></span>
+          <BrandLogo brand={banks[payBankIdx][0]} size={38} />
           <span className="m">
             <b>{banks[payBankIdx][0]}</b>
             <small>Balance {hideBal ? "₹ ••••••" : inr(banks[payBankIdx][1])}</small>

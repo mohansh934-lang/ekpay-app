@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "../BrandLogo";
 import { inr } from "@/lib/format";
 import { useEk } from "@/context/EkContext";
 

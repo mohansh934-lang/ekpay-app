@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "../BrandLogo";
 import { useEk } from "@/context/EkContext";
 
 export function BillElectricityScreen() {

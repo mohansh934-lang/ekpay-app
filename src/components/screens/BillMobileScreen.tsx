@@ -35,8 +35,8 @@ export function BillMobileScreen() {
         <small style={{ display: "block", marginTop: 10 }}>Switch Operator</small>
         <div className="chips">
           {(["Jio", "Airtel", "Vi", "BSNL"] as const).map((op) => (
-            <button key={op} className={`chip ${mobOp === op ? "on" : ""}`} onClick={() => setMobOp(op)}>
-              {op}
+            <button key={op} className={`chip ${mobOp === op ? "on" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => setMobOp(op)}>
+              <BrandLogo brand={op} size={20} radius={6} />{op}
             </button>
           ))}
         </div>
