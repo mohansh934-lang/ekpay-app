@@ -232,3 +232,36 @@ select{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--ln
   from { opacity: 0; transform: translateX(-50%) translateY(10px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+
+/* EK-RESPONSIVE-FIX: phone pe full screen (no side gap), notch/home-bar safe; desktop pe phone frame */
+html,body{overflow:hidden;overscroll-behavior:none}
+#app{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
+@media (max-width:600px), ((pointer:coarse) and (max-width:900px)){
+  #app{max-width:none !important;width:100% !important;margin:0 !important;border-radius:0 !important;box-shadow:none !important;height:100vh !important;height:100dvh !important}
+}
+#hd{height:calc(48px + var(--sat)) !important;padding-top:calc(6px + var(--sat)) !important;padding-left:calc(14px + var(--sal)) !important;padding-right:calc(14px + var(--sar)) !important}
+#mn{inset:calc(48px + var(--sat)) 0 calc(64px + var(--sab)) 0 !important;padding-left:calc(14px + var(--sal)) !important;padding-right:calc(14px + var(--sar)) !important;overflow-x:hidden !important;-webkit-overflow-scrolling:touch}
+nav{height:calc(64px + var(--sab)) !important;padding-bottom:calc(6px + var(--sab)) !important}
+#sh .sb{padding-bottom:calc(26px + var(--sab)) !important;max-height:88% !important}
+#toast{bottom:calc(88px + var(--sab)) !important}
+@media (max-height:620px){
+  #hd{height:calc(44px + var(--sat)) !important}
+  #mn{inset:calc(44px + var(--sat)) 0 calc(56px + var(--sab)) 0 !important}
+  nav{height:calc(56px + var(--sab)) !important}
+}
+img,svg,video,canvas{max-width:100%}
+
+/* EK-ZOOM-FIX: phone ki width ke hisab se poora UI auto-bada (JS --ek-z set karta hai) */
+@media (max-width:600px), ((pointer:coarse) and (max-width:900px)){
+  #app{
+    --sat:calc(env(safe-area-inset-top,0px) / var(--ek-z,1));
+    --sab:calc(env(safe-area-inset-bottom,0px) / var(--ek-z,1));
+    --sal:calc(env(safe-area-inset-left,0px) / var(--ek-z,1));
+    --sar:calc(env(safe-area-inset-right,0px) / var(--ek-z,1));
+    zoom:var(--ek-z,1);
+    width:calc(100vw / var(--ek-z,1)) !important;
+    height:calc(100vh / var(--ek-z,1)) !important;
+    height:calc(100dvh / var(--ek-z,1)) !important;
+  }
+  #toast{max-width:min(calc(90vw / var(--ek-z,1)),340px) !important}
+}

@@ -305,6 +305,22 @@ export function useEkApp() {
     };
   }, []);
 
+  // EK-ZOOM-FIX: screen ki width/height ke hisab se UI scale (kam se kam 1x, zyada se zyada 1.7x, kuch cut nahi hoga)
+  useEffect(() => {
+    const BASE_W = 376, BASE_H = 680, MAX = 1.7;
+    const apply = () => {
+      const z = Math.max(1, Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H, MAX));
+      document.documentElement.style.setProperty("--ek-z", z.toFixed(2));
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    window.addEventListener("orientationchange", apply);
+    return () => {
+      window.removeEventListener("resize", apply);
+      window.removeEventListener("orientationchange", apply);
+    };
+  }, []);
+
   const tone = (f: number, d = 0.08) => {
     if (!soundOn) return;
     try {
@@ -374,6 +390,47 @@ export function useEkApp() {
     tone(620, 0.04);
     setNavHist([r]);
   };
+
+  // EK-BACK-HANDLER: phone ka back button / gesture
+  // Kahi bhi ho -> seedha Home. Home par ho -> pehli baar toast, 2 sec ke andar dobara back -> app se bahar.
+  const navRef = useRef({ view: "home", ready: false });
+  navRef.current = { view: navHist[navHist.length - 1], ready: authState === "in" && unlocked };
+  const exitArmed = useRef(false);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (!(window.history.state && window.history.state.ek === 1)) {
+      window.history.pushState({ ek: 1 }, "");
+    }
+    const onPop = () => {
+      const { view: v, ready } = navRef.current;
+      if (ready && v !== "home") {
+        window.history.pushState({ ek: 1 }, "");
+        stopCamera();
+        setPinSheet(false);
+        setNumModal(null);
+        setBalSheetOpen(false);
+        setBalCheckModal(null);
+        setNavHist(["home"]);
+        return;
+      }
+      if (!exitArmed.current) {
+        exitArmed.current = true;
+        window.history.pushState({ ek: 1 }, "");
+        showToast("Bahar jaane ke liye ek baar aur back dabao");
+        timer = setTimeout(() => { exitArmed.current = false; }, 2000);
+        return;
+      }
+      window.removeEventListener("popstate", onPop);
+      window.history.back();
+      setTimeout(() => { try { window.close(); } catch {} }, 200);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      if (timer) clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const newKey = () =>
     typeof crypto !== "undefined" && crypto.randomUUID
