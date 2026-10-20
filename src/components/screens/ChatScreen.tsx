@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { inr } from "@/lib/format";
 import { Icon } from "@/components/Icon";
 import { useEk } from "@/context/EkContext";
+import { BankPicker } from "@/components/BankPicker"; // EK-BANK-PICKER
 
 /** Mobile / UPI ID chat-style pay screen (EK-CHAT-SCREEN) */
 export function ChatScreen() {
@@ -12,6 +13,7 @@ export function ChatScreen() {
     back, go, showToast, setPin, setPinErr, payKey, setPinSheet, loadCollectAndComplaints,
   } = useEk();
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const [pickerSignal, setPickerSignal] = useState(0);
 
   const c = contacts[payToIdx];
   const name = c ? c[0] : "";
@@ -32,7 +34,13 @@ export function ChatScreen() {
   const startPay = (a: number) => {
     if (!a || a <= 0) return showToast("Amount daalo");
     if (a > 100000) return showToast("Ek payment me max ₹1,00,000");
-    if (banks[payBankIdx] && a > banks[payBankIdx][1]) return showToast("Account me balance kam hai");
+    if (!banks.length) return showToast("Pehle bank link karo");
+    const cur = Math.min(payBankIdx, banks.length - 1);
+    if (a > banks[cur][1]) {
+      setPickerSignal((n) => n + 1); // bank list khol do
+      const alt = banks.findIndex((b) => b[1] >= a);
+      return showToast(alt >= 0 ? `${banks[cur][0]} me balance kam hai. ${banks[alt][0]} chuno` : "Kisi bhi linked bank me itna balance nahi hai");
+    }
     (document.activeElement as HTMLElement | null)?.blur();
     setPayAmt(String(a));
     setPin("");
@@ -119,9 +127,13 @@ export function ChatScreen() {
         )}
       </div>
 
+      <div style={{ padding: "8px calc(12px + var(--sar)) 0 calc(12px + var(--sal))", borderTop: "1px solid var(--ln)", background: "var(--bg)" }}>
+        <BankPicker openSignal={pickerSignal} amount={Number(payAmt) || 0} />
+      </div>
+
       <div
         style={{
-          display: "flex", alignItems: "center", gap: 10, borderTop: "1px solid var(--ln)", background: "var(--bg)",
+          display: "flex", alignItems: "center", gap: 10, background: "var(--bg)",
           padding: "10px calc(12px + var(--sar)) calc(10px + var(--sab)) calc(12px + var(--sal))",
         }}
       >

@@ -173,7 +173,11 @@ export function AmtScreen() {
             return;
           }
           if (!banks.length) return showToast("Pehle bank link karo");
-          if (a > banks[safeBankIdx][1]) return showToast("Account me balance kam hai");
+          if (a > banks[safeBankIdx][1]) {
+            setShowBanks(true); // bank list khol do taaki user bank badal sake (EK-BANK-PICKER)
+            const alt = banks.findIndex((b) => b[1] >= a);
+            return showToast(alt >= 0 ? `${banks[safeBankIdx][0]} me balance kam hai. ${banks[alt][0]} chuno` : "Kisi bhi linked bank me itna balance nahi hai");
+          }
           if (payBankIdx !== safeBankIdx) setPayBankIdx(safeBankIdx);
           setPin("");
           setPinErr("");

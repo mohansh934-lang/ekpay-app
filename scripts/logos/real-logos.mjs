@@ -26,7 +26,7 @@ const ROOT = process.cwd();
 const FORCE = process.argv.includes("--force");
 const NO_DL = process.argv.includes("--no-download");
 
-const CATALOG = path.join(ROOT, "brand-logos.json");
+const CATALOG = path.join(ROOT, "scripts/logos/brand-logos.json");
 const COMPONENT = path.join(ROOT, "src/components/BrandLogo.tsx");
 const MANIFEST = path.join(ROOT, "src/lib/brandLogos.json");
 const OUT_DIR = path.join(ROOT, "public/logos");
@@ -43,7 +43,7 @@ const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$
 const sha = (b) => crypto.createHash("sha256").update(b).digest("hex");
 
 if (!fs.existsSync(path.join(ROOT, "package.json"))) die("package.json nahi mila. Project root me script chalao.");
-if (!fs.existsSync(CATALOG)) die("brand-logos.json nahi mila. Usse project root me (package.json ke saath) rakho.");
+if (!fs.existsSync(CATALOG)) die("brand-logos.json nahi mila. Usse scripts/logos/ me rakho.");
 let catalog;
 try { catalog = JSON.parse(fs.readFileSync(CATALOG, "utf8")); } catch { die("brand-logos.json valid JSON nahi hai."); }
 const keys = Object.keys(catalog).filter((k) => catalog[k] && typeof catalog[k].domain === "string");
